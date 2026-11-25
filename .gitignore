@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+
+# oh-my-claudecode runtime state (.omc/skills/ is the committable exception)
+.omc/*
+!.omc/skills/
+
+# team run state
+.claude/state/
+
+# graphify: generated knowledge graph (rebuild with `graphify update .`)
+/graphify-out/
