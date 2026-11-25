@@ -30,6 +30,8 @@ Phone entry and SMS OTP (with resend timer and OTP rate limit), profile completi
 
 ## U2 — Browse and task detail
 
+Status: approved 2026-11-25 — `design/u2-browse.html`, decisions in `docs/decisions/0004-browse-and-task-detail.md`.
+
 Task feed as a list and a map (approximate locations only), search and filters (category, distance, points), task detail for a non-party (approximate area, poster's public profile, points offer), quote/fee preview.
 
 ## U3 — Post a task
