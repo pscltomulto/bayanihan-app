@@ -36,6 +36,8 @@ Task feed as a list and a map (approximate locations only), search and filters (
 
 ## U3 — Post a task
 
+Status: approved 2026-11-25 — `design/u3-post.html`, decisions in `docs/decisions/0005-post-a-task.md`.
+
 Post form (title, category, description, photos, schedule, location pin, points), fee and escrow breakdown before confirming, tier cap errors, insufficient points with a route to cash in, and the blocked states from `/me` `can_post` + `post_blocked_reason` (suspended, closed, tier_too_low, dormant_review, reverify_required).
 
 ## U4 — Applying and choosing a worker
