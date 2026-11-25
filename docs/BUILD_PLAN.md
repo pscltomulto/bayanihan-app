@@ -24,6 +24,8 @@ Acceptance: one `design/u0-foundation.html` with every token and component, both
 
 ## U1 — Sign-in and verification
 
+Status: approved 2026-11-25 — `design/u1-signin.html`, decisions in `docs/decisions/0003-signin-and-verification.md`.
+
 Phone entry and SMS OTP (with resend timer and OTP rate limit), profile completion to reach tier 1 (name, photo, barangay, bio), tier explainer (what each tier can do and its posting cap), ID verification upload for tier 2 (ID + selfie), pending / approved / rejected states, 90-day re-verification and dormant-review notices.
 
 ## U2 — Browse and task detail
