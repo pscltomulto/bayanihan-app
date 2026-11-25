@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bayanihan app — UI plan</title>
+<style>
+  :root {
+    --bg: #fafaf9; --card: #ffffff; --ink: #1c1917; --muted: #57534e; --line: #e7e5e4;
+    --brand: #0f766e; --brand-soft: #ccfbf1; --warn: #b45309; --warn-soft: #fef3c7;
+    --risk: #b91c1c; --risk-soft: #fee2e2; --done: #15803d; --done-soft: #dcfce7;
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0a09; --card: #1c1917; --ink: #f5f5f4; --muted: #a8a29e; --line: #292524;
+      --brand: #2dd4bf; --brand-soft: #134e4a; --warn: #fbbf24; --warn-soft: #451a03;
+      --risk: #f87171; --risk-soft: #450a0a; --done: #4ade80; --done-soft: #052e16;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 19px; margin: 40px 0 12px; letter-spacing: -0.01em; }
+  h3 { font-size: 15px; margin: 0 0 6px; }
+  p { margin: 0 0 10px; }
+  .sub { color: var(--muted); margin-bottom: 24px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; min-width: 0; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-right: 6px; white-space: nowrap; }
+  .t-done { background: var(--done-soft); color: var(--done); }
+  .t-new { background: var(--brand-soft); color: var(--brand); }
+  .t-warn { background: var(--warn-soft); color: var(--warn); }
+  .t-risk { background: var(--risk-soft); color: var(--risk); }
+  ul { margin: 6px 0 0; padding-left: 18px; }
+  li { margin: 2px 0; }
+  .muted { color: var(--muted); }
+  code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--line); padding: 1px 5px; border-radius: 6px; overflow-wrap: anywhere; }
+  .phases { display: grid; gap: 10px; }
+  .phase { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .pid { font-weight: 700; color: var(--brand); background: var(--brand-soft); border-radius: 10px; text-align: center; padding: 10px 0; }
+  .phase .card p:last-child { margin: 0; }
+  .loop { width: 100%; height: auto; display: block; }
+  .loop text { fill: var(--ink); font: 12px ui-sans-serif, system-ui, sans-serif; }
+  .loop .box { fill: var(--card); stroke: var(--brand); stroke-width: 1.5; }
+  .loop .arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; marker-end: url(#a); }
+  .phone { width: 220px; max-width: 100%; border: 8px solid var(--ink); border-radius: 28px; overflow: hidden; background: var(--bg); margin: 0 auto; }
+  .phone .bar { height: 22px; }
+  .phone .body { padding: 10px; display: grid; gap: 8px; min-height: 300px; align-content: start; }
+  .phone .task { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px; font-size: 12px; }
+  .phone .task b { display: block; font-size: 13px; }
+  .phone .pts { color: var(--brand); font-weight: 700; }
+  .phone nav { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); background: var(--card); font-size: 10px; text-align: center; }
+  .phone nav span { padding: 8px 0 12px; }
+  .phone nav .on { color: var(--brand); font-weight: 700; }
+  .phone .fab { justify-self: end; background: var(--brand); color: var(--card); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; }
+  .two { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); align-items: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .tablewrap { overflow-x: auto; }
+  .opt { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
+  .opt.rec { border-color: var(--brand); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bayanihan app — UI plan</h1>
+  <p class="sub">A mobile-first PWA, designed on the web first. Repo <code>bayanihan-app</code>, separate from the API. Draft for owner review, 2026-11-23.</p>
+
+  <h2>Goal</h2>
+  <div class="card">
+    <p>Design every screen of the user app as reviewable HTML before writing app code, so the build (U10 onward) only has to turn approved mockups into components that call the existing API.</p>
+    <p class="muted">Done when: all U0–U9 mockups are approved in Lavish, the core loop is clickable end to end, and every screen and state is mapped to its API endpoint and error codes.</p>
+  </div>
+
+  <h2>Where things stand</h2>
+  <div class="grid">
+    <div class="card"><span class="tag t-done">Done</span><h3>API and admin console</h3><p class="muted">Phases 0–10 merged into <code>team/phase-0</code> (6e6117b). Every endpoint is documented in <code>docs/api/openapi.yaml</code> with examples and error codes.</p></div>
+    <div class="card"><span class="tag t-new">Decided</span><h3>PWA, design first</h3><p class="muted">No Flutter yet. HTML mockups reviewed in Lavish. Recorded in decision 0001.</p></div>
+    <div class="card"><span class="tag t-new">Decided</span><h3>KokonutUI look</h3><p class="muted">MIT, free (Pro is paid and not used). React + Tailwind + shadcn/ui + Motion. Mockups mirror it; nothing installed yet.</p></div>
+    <div class="card"><span class="tag t-warn">Conflict</span><h3>Spec still says Flutter</h3><p class="muted">API <code>spec.md</code> lists "web app" as Not in V1 and names Flutter Android. Not edited yet (open question 1).</p></div>
+  </div>
+
+  <h2>The loop the app must make easy</h2>
+  <div class="card">
+    <svg class="loop" viewBox="0 0 900 150" role="img" aria-label="Core loop: post, apply, pick, start, proof, confirm, rate, cash out">
+      <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <g>
+        <rect class="box" x="10" y="20" width="92" height="44" rx="10"/><text x="56" y="47" text-anchor="middle">Post (U3)</text>
+        <rect class="box" x="122" y="20" width="92" height="44" rx="10"/><text x="168" y="47" text-anchor="middle">Apply (U4)</text>
+        <rect class="box" x="234" y="20" width="92" height="44" rx="10"/><text x="280" y="47" text-anchor="middle">Pick (U4)</text>
+        <rect class="box" x="346" y="20" width="92" height="44" rx="10"/><text x="392" y="47" text-anchor="middle">Start (U5)</text>
+        <rect class="box" x="458" y="20" width="92" height="44" rx="10"/><text x="504" y="47" text-anchor="middle">Proof (U5)</text>
+        <rect class="box" x="570" y="20" width="92" height="44" rx="10"/><text x="616" y="47" text-anchor="middle">Confirm (U5)</text>
+        <rect class="box" x="682" y="20" width="92" height="44" rx="10"/><text x="728" y="47" text-anchor="middle">Rate (U6)</text>
+        <rect class="box" x="794" y="20" width="96" height="44" rx="10"/><text x="842" y="47" text-anchor="middle">Cash out (U7)</text>
+        <path class="arrow" d="M102 42H120"/><path class="arrow" d="M214 42H232"/><path class="arrow" d="M326 42H344"/><path class="arrow" d="M438 42H456"/><path class="arrow" d="M550 42H568"/><path class="arrow" d="M662 42H680"/><path class="arrow" d="M774 42H792"/>
+        <text x="450" y="100" text-anchor="middle" class="muted">Points lock in escrow at Post and release at Confirm (or auto-release). Fee: 5%, minimum ₱10, shown before the user commits.</text>
+        <text x="450" y="124" text-anchor="middle">Every step is a call to /api/v1. The app holds no business rules.</text>
+      </g>
+    </svg>
+  </div>
+
+  <h2>Approach</h2>
+  <div class="two">
+    <div>
+      <ul>
+        <li><b>One self-contained HTML file per phase</b> in <code>design/</code>: inline CSS and JS, fake Dumaguete data, no real personal data.</li>
+        <li><b>UX skill + design agent</b>: <code>ux-designer</code> uses the <code>uix</code> skill (design system + 10-point checklist) and always proposes first: a Lavish page with the critique and numbered before/after pairs or options. You decide each item; only approved items are applied.</li>
+        <li><b>Reviewed in Lavish</b>; each comment applied and answered until you approve. Nothing moves to the next phase without approval.</li>
+        <li><b>KokonutUI / shadcn look</b>: same tokens, spacing and component shapes, so each mockup piece maps to a real component later.</li>
+        <li><b>Mobile first</b> at 360–430 px, checked at 768 px and desktop; 44 px touch targets; safe areas for the installed app.</li>
+        <li><b>Every state drawn</b>: loading, empty, error, offline, and the API's refusals (409, 422, 429 with a retry time).</li>
+        <li><b>Each screen lists its endpoints</b> from <code>openapi.yaml</code>; anything the API can't do goes on an API gaps list instead of being faked.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="phone" aria-label="Sketch of the app shell">
+        <div class="bar"></div>
+        <div class="body">
+          <div class="task"><b>Wash a Toyota Vios</b>Barangay Piapi · 1.2 km<div class="pts">250 pts · ₱250</div></div>
+          <div class="task"><b>Weed a small front yard</b>Barangay Bantayan · 2.4 km<div class="pts">400 pts · ₱400</div></div>
+          <div class="task"><b>Grade 5 math tutoring</b>Barangay Daro · 0.8 km<div class="pts">300 pts · ₱300</div></div>
+          <span class="fab">+ Post a task</span>
+        </div>
+        <nav><span class="on">Browse</span><span>My tasks</span><span>Wallet</span><span>Me</span></nav>
+      </div>
+      <p class="muted" style="text-align:center;margin-top:8px">Rough shell sketch only; U0 designs the real one.</p>
+    </div>
+  </div>
+
+  <h2>Phases</h2>
+  <div class="phases">
+    <div class="phase"><div class="pid">U0</div><div class="card"><h3>Design foundation and PWA shell</h3><p class="muted">Tokens (light and dark), core components, bottom-nav shell, install prompt, offline banner, update prompt, shared loading/empty/error/429/409 states.</p></div></div>
+    <div class="phase"><div class="pid">U1</div><div class="card"><h3>Sign-in and verification</h3><p class="muted">Phone + OTP, profile to tier 1, tier explainer and caps, ID + selfie for tier 2, pending/approved/rejected, re-verification and dormant-review notices.</p></div></div>
+    <div class="phase"><div class="pid">U2</div><div class="card"><h3>Browse and task detail</h3><p class="muted">Feed as list and map (approximate locations only), search and filters, task detail for non-parties, fee preview.</p></div></div>
+    <div class="phase"><div class="pid">U3</div><div class="card"><h3>Post a task</h3><p class="muted">Form with pin and photos, fee and escrow breakdown, tier caps, not enough points, and every <code>can_post</code> blocked reason.</p></div></div>
+    <div class="phase"><div class="pid">U4</div><div class="card"><h3>Applying and choosing a worker</h3><p class="muted">Apply, my applications, applicant list with ratings and standing, pick one, withdraw and cancel.</p></div></div>
+    <div class="phase"><div class="pid">U5</div><div class="card"><h3>Doing the work and chat</h3><p class="muted">Assigned view (exact pin only for the two parties), start, photo proof, confirm, cancel request, auto-release countdown, chat with images.</p></div></div>
+    <div class="phase"><div class="pid">U6</div><div class="card"><h3>Ratings, disputes and reports</h3><p class="muted">Two-way rating, opening a dispute with evidence, its status and decision, reporting a user or task.</p></div></div>
+    <div class="phase"><div class="pid">U7</div><div class="card"><h3>Wallet</h3><p class="muted">Available and locked balance, history, cash-in (fake gateway), cash-out states including held and refunded, payout accounts with masked numbers.</p></div></div>
+    <div class="phase"><div class="pid">U8</div><div class="card"><h3>Notifications, profile and settings</h3><p class="muted">Notification list and push permission, profile edit, skills, public profiles, standing, devices and sign-out everywhere, English/Filipino.</p></div></div>
+    <div class="phase"><div class="pid">U9</div><div class="card"><h3>Clickable prototype and handoff</h3><p class="muted">Core loop linked end to end, accessibility pass, screen → endpoint → error-code table, API gaps list.</p></div></div>
+    <div class="phase"><div class="pid">U10</div><div class="card"><h3>Stack decision (you)</h3><p class="muted">Pick the PWA stack and hosting (KokonutUI points to React + Tailwind + shadcn/ui), then plan the build phases.</p></div></div>
+  </div>
+
+  <h2>Risks</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Risk</th><th>Why it matters</th><th>How the plan handles it</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag t-risk">High</span>The API was built for an Android app</td><td>A browser needs CORS, a safe way to hold the sign-in token, and web push (the API registers FCM devices).</td><td>Listed in decision 0001; U9's API gaps list turns them into backend work before U10.</td></tr>
+        <tr><td><span class="tag t-warn">Med</span>Maps in the browser</td><td>The spec names the Android Maps SDK; browser maps have different pricing and limits.</td><td>U2 designs the map with approximate areas only; the provider is chosen in U10.</td></tr>
+        <tr><td><span class="tag t-warn">Med</span>Shared-IP rate limits</td><td>Carrier NAT puts many phones on one IP; <code>health</code> and OTP limits are per IP.</td><td>U0 designs the 429 state; real traffic checked before launch.</td></tr>
+        <tr><td><span class="tag t-warn">Med</span>Mockups drift from KokonutUI</td><td>Hand-built HTML may not match what the library offers.</td><td>Each mockup component names its KokonutUI or shadcn/ui counterpart.</td></tr>
+        <tr><td><span class="tag t-warn">Med</span>iOS PWA limits</td><td>iOS restricts install prompts and push for web apps.</td><td>Android first, as the spec says; iOS stays out of V1.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Open questions</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>1. When to update the API spec?</h3>
+      <p class="muted">spec.md still says Flutter Android and "web app: Not in V1".</p>
+      <div class="opt rec"><b>Now (recommended)</b> — edit spec §1 and §8 to say PWA, so both repos agree before design starts.</div>
+      <div class="opt"><b>At U10</b> — change it once the stack is picked.</div>
+    </div>
+    <div class="card">
+      <h3>2. How are mockups styled?</h3>
+      <p class="muted">The repo rule is self-contained HTML with no CDN.</p>
+      <div class="opt rec"><b>Hand-written CSS with shadcn tokens (recommended)</b> — works offline and anywhere, no external scripts.</div>
+      <div class="opt"><b>Tailwind browser runtime from a CDN</b> — closer to KokonutUI's class names, but needs the network and breaks the no-CDN rule.</div>
+    </div>
+    <div class="card">
+      <h3>3. Which language to design in first?</h3>
+      <p class="muted">The spec wants English and Filipino.</p>
+      <div class="opt rec"><b>English first, Filipino in U8 (recommended)</b> — leave room for longer strings throughout.</div>
+      <div class="opt"><b>Both from U0</b> — every mockup has a language toggle.</div>
+    </div>
+  </div>
+</main>
+</body>
+</html>
