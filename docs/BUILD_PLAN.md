@@ -48,6 +48,8 @@ Status: approved 2026-11-26 — `design/u4-apply.html`, decisions in `docs/decis
 
 ## U5 — Doing the work and chat
 
+Status: approved 2026-11-26 — `design/u5-work.html`, decisions in `docs/decisions/0007-doing-the-work-and-chat.md`.
+
 Assigned-task view for both sides (exact pin shown only to the poster and the accepted worker, hidden after completion), start task, photo proof upload, confirm or request changes, cancel request, auto-release countdown, task chat (text, images, read markers, rate-limit refusal).
 
 ## U6 — Ratings, disputes and reports
