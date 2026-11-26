@@ -54,6 +54,8 @@ Assigned-task view for both sides (exact pin shown only to the poster and the ac
 
 ## U6 — Ratings, disputes and reports
 
+Status: approved 2026-11-26 — `design/u6-trust.html`, decisions in `docs/decisions/0008-ratings-disputes-reports.md`.
+
 Two-way rating after completion, opening a dispute with evidence, dispute status and decision, reporting a user or task.
 
 ## U7 — Wallet
