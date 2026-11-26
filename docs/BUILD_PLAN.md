@@ -42,6 +42,8 @@ Post form (title, category, description, photos, schedule, location pin, points)
 
 ## U4 — Applying and choosing a worker
 
+Status: approved 2026-11-26 — `design/u4-apply.html`, decisions in `docs/decisions/0006-applying-and-choosing.md`.
+
 "I can do this" apply flow and limits, my applications, the poster's applicant list (public profiles, ratings, verified badge, tasks done; ordered by the API, which puts better standing first, but standing itself is never shown to others), picking one worker, withdrawing and cancelling, pick reminders.
 
 ## U5 — Doing the work and chat
