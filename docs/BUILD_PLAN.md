@@ -78,4 +78,54 @@ Link the approved screens into click-through flows for the core loop (post → a
 
 ## U10 — Stack decision (owner)
 
+Status: decided 2026-11-27 — React 19 + Vite single-page PWA with KokonutUI/shadcn, Sanctum cookie sign-in on app./api. subdomains, hosted beside the API for the pilot. Decisions in `docs/decisions/0012-stack.md`.
+
 Choose the PWA stack and hosting, then write the implementation phases. Inputs: the approved designs, the API gaps list, and the PWA items the API needs (see decision 0001).
+
+---
+
+# Implementation phases
+
+Each phase is built against the approved mockup it names, follows the `uix` checklist and the accessibility build notes in `design/u9-handoff.html#a11y`, and is reviewed by the owner before the next starts. Packages are limited to the list approved in decision 0012. API work happens in `../bayanihan-api` under its own workflow and rules.
+
+## I1 — API prerequisites (in bayanihan-api)
+
+P1 browser access (Sanctum `statefulApi()`, stateful domains, a published `config/cors.php` with only the app origin and credentials, OTP verify starts a session, sign-out and "Sign out everywhere" end it, long phone sessions, cookie scope that doesn't widen the admin session, `REVERB_ALLOWED_ORIGINS`), P2 `Retry-After` on every 429 exposed through CORS, P3 IP-keyed limits behind carrier NAT. Needs the owner's domain.
+
+Done when: from the app's origin, a browser signs in by OTP, `GET /me` answers 200 from the cookie, a POST without the CSRF header is refused, and a 429's retry time is readable in script.
+
+## I2 — Repo scaffold and app shell
+
+Vite + React + TypeScript, U0 tokens in Tailwind 4, Plus Jakarta Sans, Lucide, bottom tabs, routes, light/dark following the phone, lint/test/CI on GitHub Actions.
+
+Done when: the shell matches `design/u0-foundation.html` at 360, 768 and desktop in both themes, and CI is green on the first push.
+
+## I3 — PWA layer
+
+Manifest, icon and splash, service worker, offline banner, update-ready prompt, install sheet (Android button, iPhone steps).
+
+Done when: it installs on Android and iPhone, opens offline to the shell with the offline banner, and shows "update ready" after a new deploy.
+
+## I4 — Sign-in and verification (U1)
+
+Done when: every U1 state, including 401, 422 and 429, passes in Playwright against the staging API.
+
+## I5 — Browse, task detail and posting (U2, U3)
+
+Includes the map, photo compression, the local draft and Idempotency-Key retries. Needs P4 (barangay and category lists).
+
+Done when: a post with photos uploads each under 300 KB, and "Try again" after a dropped connection holds the points once.
+
+## I6 — Applying, choosing, work and chat (U4, U5)
+
+Done when: two browsers run apply → pick → start → proof, with chat messages arriving live in both.
+
+## I7 — Ratings, disputes, reports and wallet (U6, U7)
+
+Against the FakeGateway. Needs P6 (dispute result on the task) before the pilot.
+
+Done when: confirm → rate → cash out completes, and a repeated cash-out request with the same key creates one cash-out.
+
+## I8 — Me, notifications, Filipino, accessibility and production
+
+Done when: the U9 core loop passes in both languages with zero serious axe findings, served over HTTPS from the chosen host. Needs P5 (consent recorded) before the pilot.

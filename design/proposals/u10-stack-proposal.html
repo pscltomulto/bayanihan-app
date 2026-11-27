@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U10 Stack decision</title>
+<style>
+:root{color-scheme:light dark;--pbg:#F5F5F4;--pcard:#FFFFFF;--pfg:#1C1917;--pmuted:#57534E;--pline:#E7E5E4;--pacc:#0F766E;--pacc-soft:#CCFBF1;--pacc-ink:#115E59;--pframe:#292524;--ppro:#166534;--pcon:#92400E;--pbad:#B91C1C;--pbad-soft:#FEE2E2;--pwarn-soft:#FEF3C7;--pok-soft:#DCFCE7;--pana:#9A3412;--pana-soft:#FFEDD5;--pben:#1E40AF;--pben-soft:#DBEAFE;}
+@media (prefers-color-scheme: dark){:root{--pbg:#0C0A09;--pcard:#171412;--pfg:#F5F5F4;--pmuted:#A8A29E;--pline:#2E2A27;--pacc:#2DD4BF;--pacc-soft:#134E4A;--pacc-ink:#5EEAD4;--pframe:#57534E;--ppro:#4ADE80;--pcon:#FBBF24;--pbad:#F87171;--pbad-soft:#450A0A;--pwarn-soft:#451A03;--pok-soft:#052E16;--pana:#FDBA74;--pana-soft:#431407;--pben:#93C5FD;--pben-soft:#172554;}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--pbg);color:var(--pfg);font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1120px;margin:0 auto;padding:32px 16px 80px}
+a{color:var(--pacc-ink)}
+a:focus-visible{outline:3px solid var(--pacc);outline-offset:2px;border-radius:4px}
+code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--pline);padding:1px 5px;border-radius:6px;overflow-wrap:anywhere}
+h1{font-size:30px;line-height:1.2;letter-spacing:-.02em;margin:0 0 8px}
+.kick{margin:0 0 6px;color:var(--pmuted)}
+.lede{color:var(--pmuted);max-width:72ch;margin:0 0 20px}
+.how{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));margin-bottom:16px}
+.box{background:var(--pcard);border:1px solid var(--pline);border-radius:12px;padding:16px;min-width:0}
+.box h3{margin:0 0 8px;font-size:16px}
+.box p{margin:0}
+.box ul,.box ol{margin:0;padding-left:18px}.box li{margin:4px 0}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 14px;border:1px solid var(--pline);border-radius:999px;background:var(--pcard);text-decoration:none;color:var(--pfg);font-size:14px}
+.toc a b{color:var(--pacc-ink)}
+.part{margin:72px 0 0;padding-top:20px;border-top:2px solid var(--pfg);display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.part h2{margin:0;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.part p{margin:0;color:var(--pmuted);font-size:15px}
+.dec{margin-top:48px;scroll-margin-top:16px}
+.dh{display:flex;gap:14px;align-items:flex-start;margin-bottom:8px}
+.dh h2,.dh h3{margin:2px 0;font-size:22px;letter-spacing:-.01em;line-height:1.25}
+.q{margin:0;color:var(--pmuted)}
+.dn{flex:none;min-width:44px;height:44px;padding:0 8px;border-radius:12px;background:var(--pacc);color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.dn.ghost{background:var(--pacc-soft);color:var(--pacc-ink)}
+@media (prefers-color-scheme: dark){.dn{color:#042F2E}.dn.ghost{color:var(--pacc-ink)}}
+.ctx{margin:8px 0 16px;color:var(--pmuted);font-size:15px;max-width:90ch}
+.opts{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start}
+.opt{background:var(--pcard);border:1px solid var(--pline);border-radius:14px;padding:12px;min-width:0}
+.opt.rec{border:2px solid var(--pacc);padding:11px}
+.oh{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.oh h4{margin:0;font-size:16px;flex:1;min-width:0;line-height:1.3}
+.ol{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:800;background:var(--pline);font-size:14px;flex:none}
+.opt.rec .ol{background:var(--pacc);color:#fff}
+@media (prefers-color-scheme: dark){.opt.rec .ol{color:#042F2E}}
+.recb{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--pacc-soft);color:var(--pacc-ink)}
+.pc{list-style:none;margin:12px 0 0;padding:0;font-size:14px}
+.pc li{position:relative;padding-left:22px;margin:6px 0}
+.pc li::before{position:absolute;left:0;top:0;font-weight:800;width:16px;text-align:center}
+.pc li.pro::before{content:"+";color:var(--ppro)}
+.pc li.con::before{content:"\2013";color:var(--pcon)}
+.recline{margin:16px 0 0;padding:12px 16px;border-left:4px solid var(--pacc);background:var(--pcard);border-radius:0 10px 10px 0;max-width:90ch}
+.tblh{margin:24px 0 8px;font-size:16px}
+.tablewrap{overflow-x:auto;background:var(--pcard);border:1px solid var(--pline);border-radius:12px}
+.tablewrap:focus-visible{outline:3px solid var(--pacc);outline-offset:2px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--pline);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{color:var(--pmuted);font-weight:600;white-space:nowrap}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+td.ms{font-variant-numeric:tabular-nums;min-width:150px}
+table.wide{min-width:960px}
+table.wide td:nth-child(2){min-width:180px}
+.sev{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.sev.h{background:var(--pbad-soft);color:var(--pbad)}
+.sev.m{background:var(--pwarn-soft);color:var(--pcon)}
+.sev.l{background:var(--pline);color:var(--pfg)}
+.sev.p{background:var(--pok-soft);color:var(--ppro)}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 7px;border-radius:6px;border:1px solid var(--pline);white-space:nowrap;margin:1px 0}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;border:1px solid var(--pline);margin-right:2px}
+.gapg{margin-top:16px}
+.gapg h4{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gapl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.gapl li{background:var(--pcard);border:1px solid var(--pline);border-radius:10px;padding:10px 12px;font-size:14px}
+.gapl li b{display:block;font-size:15px;margin-bottom:2px}
+.gapl .src{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.reclist{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.reclist li{display:flex;gap:12px;align-items:flex-start;background:var(--pcard);border:1px solid var(--pline);border-radius:10px;padding:10px 12px}
+.reclist .dn{min-width:40px;height:32px;font-size:15px;border-radius:9px}
+.reclist p{margin:0}
+
+
+.arch{display:grid;gap:10px;grid-template-columns:1fr;background:var(--pcard);border:1px solid var(--pline);border-radius:14px;padding:16px}
+@media (min-width:768px){.arch{grid-template-columns:1fr auto 1fr 1fr;align-items:stretch}}
+.arch .node{border:1px solid var(--pline);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--pbg);min-width:0;font-size:14px}
+.arch .node b{font-size:16px;overflow-wrap:anywhere}
+.arch .node.pri{border:2px solid var(--pacc);padding:11px}
+.arch .node .tag{align-self:flex-start;white-space:normal}
+.arch .link{align-self:center;justify-self:center;color:var(--pmuted);font-size:13px;font-weight:600;text-align:center;max-width:16ch}
+.srcs{margin:0;padding-left:18px;font-size:14px;color:var(--pmuted)}
+.srcs li{margin:6px 0;overflow-wrap:anywhere}
+.tablewrap table{min-width:560px}
+</style>
+</head>
+<body>
+<main>
+<p class="kick">Bayanihan app · Phase U10 · Proposal · 27 Nov 2026</p>
+<h1>Stack decision: what the app is built with</h1>
+<p class="lede">The designs (U0–U9) are approved. Before any code is written, you pick the tools the app is built with and where it runs. Nine numbered decisions below, each with two or three options, the trade-offs in plain words and a recommendation. Answer by number with a letter, or say “all recommended”. Versions were checked on the official package registry and docs on 27 Nov 2026; sources are at the bottom.</p>
+<div class="how">
+<div class="box"><h3>What is already fixed</h3><p>A mobile-first PWA in its own repo (decision 0001). The look: tokens, Plus Jakarta Sans self-hosted, Lucide icons, light/dark follows the phone (0002). WCAG 2.2 AA plus house rules (0011). The Laravel API owns every rule and all money; the app only calls <code>/api/v1</code>.</p></div>
+<div class="box"><h3>What you decide</h3><p>Nine items: framework (1), rendering (2), offline and install (3), sign-in in the browser (4), data and live chat (5), language and forms (6), maps and photos (7), testing (8), hosting (9). The teal-bordered option is recommended. You also approve the package list.</p></div>
+<div class="box"><h3>After approval</h3><p>The decisions go into <code>docs/decisions/0012-stack.md</code>, and the build phases I1–I8 below are written into <code>docs/BUILD_PLAN.md</code>. Nothing is installed until then.</p></div>
+</div>
+<nav aria-label="Sections"><ul class="toc">
+<li><a href="#glance">At a glance</a></li>
+<li><a href="#d1"><b>1</b> Framework</a></li><li><a href="#d2"><b>2</b> Rendering</a></li><li><a href="#d3"><b>3</b> Offline and install</a></li><li><a href="#d4"><b>4</b> Sign-in</a></li><li><a href="#d5"><b>5</b> Data and chat</a></li><li><a href="#d6"><b>6</b> Language and forms</a></li><li><a href="#d7"><b>7</b> Maps and photos</a></li><li><a href="#d8"><b>8</b> Testing</a></li><li><a href="#d9"><b>9</b> Hosting</a></li>
+<li><a href="#packages">Packages</a></li><li><a href="#api">API first</a></li><li><a href="#phases">Build phases</a></li><li><a href="#decisions">Decisions needed</a></li><li><a href="#sources">Sources</a></li>
+</ul></nav>
+
+<section class="dec" id="glance" aria-labelledby="glance-h">
+<div class="dh"><span class="dn ghost">→</span><div><h2 id="glance-h">The recommended stack at a glance</h2><p class="q">How the pieces fit if every recommendation is taken.</p></div></div>
+<div class="arch" role="img" aria-label="Diagram: the phone loads the app from app.example.ph, which talks to api.example.ph for data, sign-in and live chat; the admin console stays on the API host.">
+<div class="node"><b>Phone</b><span>Browser or installed app (Android, iPhone)</span><span class="tag">service worker caches the app shell</span></div>
+<div class="link" aria-hidden="true">loads the app, then calls the API</div>
+<div class="node pri"><b>app.example.ph</b><span>React app, built files only (no server code)</span><span class="tag">static, HTTPS</span></div>
+<div class="node"><b>api.example.ph</b><span>Laravel: <code>/api/v1</code>, sign-in cookie, Reverb chat, and the admin console at <code>/admin</code></span><span class="tag">same server as today</span></div>
+</div>
+<p class="ctx"><code>example.ph</code> stands for whatever domain you register. Both names share one parent domain, which is what lets the browser keep the sign-in in a cookie the app’s own code can’t read (decision 4).</p>
+</section>
+
+<div class="part"><h2>Building blocks</h2><p>1–3: what the app is written in and how it installs</p></div>
+
+<section class="dec" id="d1" aria-labelledby="d1-h">
+<div class="dh"><span class="dn">1</span><div><h2 id="d1-h">UI framework</h2><p class="q">The toolkit every screen is written in. The biggest choice; most others follow from it.</p></div></div>
+<p class="ctx">You planned to use KokonutUI (0001). Checked today: MIT licence, active (last change 26 Nov 2026, about 2,400 stars), 116 components. It is <b>React-only</b>: each component is React + Tailwind CSS + Motion + Lucide, copied into the codebase with the shadcn command-line tool. The components sampled use no Next.js-only code, so they run in a plain React app. The admin console in the API repo is Vue 3, so any React choice means two frameworks across the two repos.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>React 19 + Vite 8, with shadcn/ui and KokonutUI as they are</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">Uses KokonutUI and shadcn/ui directly; the mockups were drawn to map onto them one to one</li><li class="pro">Same build tool (Vite) and same styling (Tailwind CSS 4) as the admin, so the tokens carry over</li><li class="pro">The largest pool of developers and examples if you hire help later</li><li class="con">Two frameworks to know: React here, Vue in the admin</li><li class="con">Copied components are ours to update; no automatic upgrades</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Vue 3 + Vite, with shadcn-vue, KokonutUI rebuilt by hand</h4></div>
+<ul class="pc"><li class="pro">One framework across app and admin</li><li class="pro">shadcn-vue is MIT and well kept (about 10,900 stars, updated this week)</li><li class="con">No KokonutUI for Vue: every KokonutUI piece the mockups use is rebuilt and maintained by us</li><li class="con">Look and motion may drift from what you approved</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Next.js 16 (React) or Nuxt 4 (Vue)</h4></div>
+<ul class="pc"><li class="pro">Batteries included: routing, server rendering, image tools</li><li class="pro">Next.js keeps KokonutUI as is</li><li class="con">Built around a Node server we don’t need (see decision 2), so one more thing to run and patch</li><li class="con">Offline and service-worker setup is harder than in a plain Vite app</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> you chose KokonutUI and the designs mirror it. React with Vite gets it without a server, and the Vue admin is a separate surface staff use, so the split costs little. SvelteKit isn’t offered: no KokonutUI, a third framework, no gain for this app.</p>
+</section>
+
+<section class="dec" id="d2" aria-labelledby="d2-h">
+<div class="dh"><span class="dn">2</span><div><h2 id="d2-h">Rendering: phone builds the page, or a server does</h2><p class="q">Whether pages are assembled on the phone (a single-page app) or on a server first.</p></div></div>
+<p class="ctx">Server rendering mainly helps search engines and the first paint of public pages. Almost everything in Bayanihan is behind sign-in, and the task pages show private data, so search engines shouldn’t index them anyway.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>Single-page app, built to plain files</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">No server code to run: the app is a folder of files any web server can hand out</li><li class="pro">The offline shell is simple: cache the files once and the app opens without signal</li><li class="pro">Cheapest to host</li><li class="con">The very first visit downloads the app before anything shows (kept small with code splitting; later opens come from the cache)</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Server rendering (Next.js or Nuxt)</h4></div>
+<ul class="pc"><li class="pro">Slightly faster first screen on a slow phone</li><li class="con">A Node server to host, monitor and keep patched</li><li class="con">The server would need the user’s sign-in too, which complicates decision 4</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Single-page app plus a few pre-built public pages</h4></div>
+<ul class="pc"><li class="pro">A landing page and the terms or privacy pages show without the app</li><li class="con">Little to gain today: there is no public landing page in the approved designs</li><li class="con">Can be added later without changing anything else</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> behind a sign-in, server rendering costs a server and buys almost nothing. C can be added later if you want a marketing page.</p>
+</section>
+
+<section class="dec" id="d3" aria-labelledby="d3-h">
+<div class="dh"><span class="dn">3</span><div><h2 id="d3-h">Offline shell, install and updates</h2><p class="q">The part that makes it a PWA: works on a weak signal, installs to the home screen, updates cleanly.</p></div></div>
+<p class="ctx">The designs need an app icon and splash, an install sheet after the first success plus a row in Me, an offline banner, and “needs signal” messages (0002 items 10.1–10.3). A <b>service worker</b> is the small background script that caches the app so it opens offline.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>vite-plugin-pwa (Workbox inside), “update ready” prompt</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">Generates the manifest, icons and service worker from one config; supports React and Vite 8</li><li class="pro">Built-in “a new version is ready, reload” prompt, so nobody is stuck on an old version mid-task</li><li class="pro">Caches the app shell only; API answers are never served stale for money or status</li><li class="con">One more build plugin to keep updated</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Hand-written service worker</h4></div>
+<ul class="pc"><li class="pro">No package; full control</li><li class="con">Cache versioning and update handling are easy to get wrong, and a broken service worker can trap users on an old app</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Workbox directly, no plugin</h4></div>
+<ul class="pc"><li class="pro">Same engine as A, wired by hand</li><li class="con">More setup for the same result</li></ul></div>
+</div>
+<div class="box" style="margin-top:16px"><h3>iPhone limits, whatever we pick</h3><ul>
+<li>No install button on iPhone: Safari never offers the install event, so the install sheet shows “Share → Add to Home Screen” steps there and a real button on Android.</li>
+<li>Web push on iPhone works only after the app is added to the Home Screen (iOS 16.4 or later) and only after a tap. That matches 0002 item 10.4 (push only from Notifications in Me); push itself waits for gap R1.</li>
+<li>Safari may clear saved data from sites not opened for about 7 days; the installed app is treated better. So drafts kept on the phone (the U3 draft, the U7 unfinished cash-in) are a convenience, never the only copy of anything that matters.</li>
+<li>No background sync on iPhone, so retries happen while the app is open (decision 5).</li></ul></div>
+<p class="recline"><b>Why A:</b> it is the standard Vite way to do exactly what the U0 PWA pieces need, including the update prompt that keeps someone mid-task on a working version.</p>
+</section>
+
+<div class="part"><h2>Talking to the API</h2><p>4–5: sign-in, data, live chat and weak signal</p></div>
+
+<section class="dec" id="d4" aria-labelledby="d4-h">
+<div class="dh"><span class="dn">4</span><div><h2 id="d4-h">How the browser stays signed in</h2><p class="q">Gap P1 (blocks the pilot). Decides the domain layout too.</p></div></div>
+<p class="ctx">Today the API signs people in with a <b>token</b> made for a phone app (<code>POST auth/otp/verify</code> returns it; it never expires). A web page can only keep such a token in browser storage, where any script that sneaks into the page (an XSS bug, a bad package) can read and steal it. Laravel’s own docs say not to use these tokens for your own web app and to use cookie sign-in instead. Checked in the API: cookie sign-in isn’t switched on (no <code>statefulApi()</code>), CORS uses Laravel’s default (any site, no cookies, no readable <code>Retry-After</code>), and Reverb accepts any origin.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>Cookie sign-in (Sanctum SPA) on app.example.ph + api.example.ph</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">The sign-in lives in a cookie page scripts can’t read, so an XSS bug can’t walk off with the account</li><li class="pro">Built into Sanctum, which the API already uses; chat sign-in (<code>/api/broadcasting/auth</code>) already runs through <code>auth:sanctum</code></li><li class="pro">Tokens stay available for a native app later</li><li class="con">Needs CSRF protection (a second cookie and header), which Sanctum provides</li><li class="con">API work in I1: start a session on OTP verify, end it on sign-out and “Sign out everywhere”, and keep phones signed in for weeks, not the 2-hour default</li><li class="con">The cookie scope must be set so the admin console’s session isn’t widened to the app’s address</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Keep the token, stored in the browser</h4></div>
+<ul class="pc"><li class="pro">No sign-in change in the API; only CORS and a narrowed origin list</li><li class="pro">App and API can live on any domains</li><li class="con">A token that never expires sits where scripts can read it; one XSS bug or bad package means stolen accounts with money in them</li><li class="con">Against Laravel’s guidance for first-party web apps</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Cookie sign-in, app and API on one address</h4></div>
+<ul class="pc"><li class="pro">Same cookie protection as A, and no CORS at all: <code>app.example.ph/api</code> is passed through to Laravel</li><li class="pro">No shared parent-domain cookie to scope</li><li class="con">The web server must also pass through Reverb’s live connection and broadcasting sign-in</li><li class="con">Ties the app’s hosting to the API server (rules out a CDN host in decision 9)</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> real money sits behind each account, so the sign-in belongs in a cookie scripts can’t touch, which is what Laravel recommends. Two subdomains under one domain is the standard Sanctum layout. C is a good fallback if scoping the cookie turns out awkward.</p>
+</section>
+
+<section class="dec" id="d5" aria-labelledby="d5-h">
+<div class="dh"><span class="dn">5</span><div><h2 id="d5-h">Data, live chat and a weak signal</h2><p class="q">How screens load and refresh data, how chat updates live, and what happens when the signal drops.</p></div></div>
+<p class="ctx">The designs ask for: loading, empty, error and offline states on every screen; money actions retried by hand with the <b>same Idempotency-Key</b> and never posted automatically (U3 item 11, U7 item 12); one draft kept on the phone; live chat on the private channel <code>task.{ulid}.{worker_ulid}</code>. Reverb speaks the Pusher protocol, so the browser uses Laravel Echo with pusher-js.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>TanStack Query + Laravel Echo, retries by hand</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">TanStack Query handles loading, caching, refetch on reconnect and paging (the API uses cursor pages) with little code</li><li class="pro">Its offline mode pauses requests and resumes them when signal returns, matching the offline banner</li><li class="pro">A money action makes its key once (when the review screen opens, as U3 says) and reuses it on “Try again”, so a retry can’t pay twice</li><li class="con">Two packages to learn (Query, Echo + pusher-js)</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Plain fetch and our own small cache</h4></div>
+<ul class="pc"><li class="pro">Fewest packages</li><li class="con">We rewrite caching, refetch-on-focus, paging and offline pause, and get the edge cases wrong at first</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Offline-first: a local database that syncs</h4></div>
+<ul class="pc"><li class="pro">Browsing works fully offline</li><li class="con">Wrong fit: status and money must come from the server, and the designs say “needs signal” rather than queue actions</li><li class="con">No background sync on iPhone anyway</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> it gives every screen the states the designs drew with the least code, and the retry rule stays explicit: same key, user taps, no silent re-posting.</p>
+</section>
+
+<div class="part"><h2>Features</h2><p>6–7: language, forms, maps and photos</p></div>
+
+<section class="dec" id="d6" aria-labelledby="d6-h">
+<div class="dh"><span class="dn">6</span><div><h2 id="d6-h">English and Filipino, forms and validation</h2><p class="q">Two small choices answered together.</p></div></div>
+<p class="ctx">Every string must exist in English and Filipino with room for longer Filipino text (spec, 0010). Forms show the API’s 422 field errors inline (U0). The server is always the judge; checks on the phone only save a round trip.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>i18next + react-i18next; React Hook Form + Zod</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">i18next: one file per language, plurals (“1 applicant / 3 applicants”), language switch from Me without reload</li><li class="pro">React Hook Form + Zod: quick forms on cheap phones; the API’s 422 errors map straight onto fields</li><li class="pro">shadcn/ui’s Form component is built on React Hook Form</li><li class="con">Five packages for two jobs</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Our own string lookup; plain HTML forms</h4></div>
+<ul class="pc"><li class="pro">No packages</li><li class="con">Filipino plurals, number formatting and missing-string checks are written by hand</li><li class="con">More code on long forms (post a task, profile, cash-out)</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> both are the common, MIT-licensed defaults for React and match how shadcn/ui forms are built, so the mockups’ form pieces map straight across.</p>
+</section>
+
+<section class="dec" id="d7" aria-labelledby="d7-h">
+<div class="dh"><span class="dn">7</span><div><h2 id="d7-h">Maps and photo compression</h2><p class="q">Gaps R2 and R3. The spec planned the Google Maps SDK for Android, which a web app can’t use.</p></div></div>
+<p class="ctx">The map only ever shows <b>approximate areas</b> (the exact pin is private), as a small strip on Browse and a map view. Photos must shrink to about 300 KB on the phone before upload (spec).</p>
+<h3 class="tblh">7a · Map</h3>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>MapLibre GL with OpenFreeMap tiles</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">MapLibre is free and open (BSD); OpenFreeMap tiles are free with no key and allow commercial use</li><li class="pro">Vector maps can be restyled to the teal and dark theme</li><li class="con">MapLibre is the largest package here; loaded only on map screens</li><li class="con">A free public tile service has no guarantee; MapTiler or self-hosted tiles are the paid fallback</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Google Maps JavaScript API</h4></div>
+<ul class="pc"><li class="pro">Familiar look; what the spec had in mind</li><li class="con">Needs a billing account and an API key; pay per map load past the free allowance</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Leaflet with openstreetmap.org tiles</h4></div>
+<ul class="pc"><li class="pro">Small and simple</li><li class="con">OpenStreetMap’s own tile servers don’t allow heavy app use, so we would need a tile provider anyway</li><li class="con">Leaflet’s last release was 2023</li></ul></div>
+</div>
+<h3 class="tblh">7b · Photo compression</h3>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>The browser’s own canvas, about 40 lines of our code</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">No package: resize to a long edge, save as JPEG/WebP, step quality down until under 300 KB</li><li class="pro">Strips location data from the photo as a side effect, which suits the privacy rules</li><li class="con">Ours to test on old Android phones and iPhone photos</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>browser-image-compression package</h4></div>
+<ul class="pc"><li class="pro">Ready-made, MIT</li><li class="con">Last release March 2023; an unmaintained package in the upload path</li></ul></div>
+</div>
+<p class="recline"><b>Why A and A:</b> approximate-area maps need nothing Google-specific, and free tiles keep the pilot at no map cost. Compression is a small job the browser does natively, so no package is worth adding.</p>
+</section>
+
+<div class="part"><h2>Quality and running it</h2><p>8–9: testing, hosting, deploy</p></div>
+
+<section class="dec" id="d8" aria-labelledby="d8-h">
+<div class="dh"><span class="dn">8</span><div><h2 id="d8-h">Testing, quality checks and TypeScript</h2><p class="q">How we prove each screen works before you see it, and keep it working.</p></div></div>
+<p class="ctx"><b>TypeScript</b> is JavaScript with labelled data shapes, so a typo in a field name is caught before it reaches a phone. KokonutUI and shadcn/ui are written in it. Checked today: TypeScript 7 is out, but the lint tool (typescript-eslint) supports only up to 6.0, and the accessibility lint rules don’t yet list ESLint 10, so the plan pins TypeScript 6.0 and ESLint 9.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>TypeScript, Vitest, Testing Library, Playwright with axe</h4><span class="recb">Recommended</span></div>
+<ul class="pc"><li class="pro">Vitest + Testing Library: fast checks of pieces such as the fee box, points formatting and the retry key</li><li class="pro">Mock Service Worker plays back the API’s documented answers (422, 409, 429) so every refusal state is tested</li><li class="pro">Playwright runs the core loop in real Chrome and Safari engines at 360 and 768 px; axe fails the build on serious accessibility problems</li><li class="con">The longest list of build-time packages (none ship to phones)</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Plain JavaScript, end-to-end tests only</h4></div>
+<ul class="pc"><li class="pro">Fewer tools to learn</li><li class="con">Mistakes found later and slower; end-to-end tests alone are slow and flaky</li><li class="con">KokonutUI and shadcn code would need converting</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> the API repo is held to tests, static analysis and style checks on every change; the app should be too. axe in the end-to-end run keeps the U9 accessibility work from slipping.</p>
+</section>
+
+<section class="dec" id="d9" aria-labelledby="d9-h">
+<div class="dh"><span class="dn">9</span><div><h2 id="d9-h">Hosting, deploy and CI</h2><p class="q">Where the app’s files live, how they get there, and where checks run.</p></div></div>
+<p class="ctx">The API runs on one VPS set up with Forge or Ploi (spec §8). The app built under decisions 1–2 is just files, so it can sit on that VPS or on a static host. After the first visit, the service worker serves the app from the phone, so the host’s distance from Dumaguete mostly affects first load; API calls go to the VPS either way. Both repos are on GitHub, and the API already runs GitHub Actions.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>Same VPS as the API, as a second site</h4><span class="recb">Recommended for the pilot</span></div>
+<ul class="pc"><li class="pro">No new account or bill; Forge or Ploi adds the site and a free Let’s Encrypt certificate</li><li class="pro">One place to look when something breaks; keeps decision 4 option C open</li><li class="con">No CDN: first load comes from the VPS region, not a Manila edge</li><li class="con">A busy API and the app share one machine (tiny for static files)</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Cloudflare Pages (static host with a CDN)</h4></div>
+<ul class="pc"><li class="pro">Free plan; edge servers near the Philippines; preview links for each change</li><li class="pro">Works with decision 4 option A (same parent domain)</li><li class="con">A third-party account holding the domain’s app address</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Vercel or Netlify</h4></div>
+<ul class="pc"><li class="pro">Very easy deploys and previews</li><li class="con">Their free tiers restrict commercial use or bandwidth; paid sooner than B</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> at pilot scale one server is simplest and costs nothing extra; the app is small and cached on the phone. Moving to B later only changes where the files are copied. <b>CI:</b> GitHub Actions in <code>bayanihan-app</code> runs type check, lint, unit tests, build and the Playwright run on every push; deploys only after you merge.</p>
+</section>
+
+<div class="part" id="packages"><h2>Packages this would add</h2><p>Recommended stack only · versions and licences from the npm registry, 27 Nov 2026</p></div>
+<section class="dec" aria-labelledby="pk-h">
+<div class="dh"><span class="dn ghost">#</span><div><h2 id="pk-h">42 packages: 20 ship to phones, 22 build and test only</h2><p class="q">Every one needs your OK. All are free and open source; none are KokonutUI Pro.</p></div></div>
+<p class="ctx">Not packages: KokonutUI and shadcn/ui components are copied in as source (keep their MIT notice); the shadcn command-line tool is run once with <code>npx</code> to copy them; photo compression is our own code. vite-plugin-pwa brings <code>workbox-build</code> with it.</p>
+<h3 class="tblh">Ship to phones (dependencies)</h3>
+<div class="tablewrap" tabindex="0" role="region" aria-label="Runtime packages"><table>
+<thead><tr><th>Package</th><th>Version</th><th>Why</th><th>Licence</th><th>Decision</th></tr></thead>
+<tbody>
+<tr><td><code>react</code>, <code>react-dom</code></td><td class="num">19.3.1</td><td>The UI framework</td><td>MIT</td><td>1</td></tr>
+<tr><td><code>react-router</code></td><td class="num">8.5.3</td><td>Screens and back button, in single-page mode</td><td>MIT</td><td>2</td></tr>
+<tr><td><code>radix-ui</code></td><td class="num">1.8.1</td><td>Accessible sheet, dialog, tabs and select under shadcn/ui</td><td>MIT</td><td>1</td></tr>
+<tr><td><code>class-variance-authority</code></td><td class="num">0.7.1</td><td>Button and badge variants (shadcn/ui)</td><td>Apache-2.0</td><td>1</td></tr>
+<tr><td><code>clsx</code>, <code>tailwind-merge</code></td><td class="num">2.1.1 · 3.7.1</td><td>Combine Tailwind classes (shadcn/ui and KokonutUI <code>cn()</code>)</td><td>MIT</td><td>1</td></tr>
+<tr><td><code>lucide-react</code></td><td class="num">1.81.0</td><td>Lucide icons (0002)</td><td>ISC</td><td>1</td></tr>
+<tr><td><code>motion</code></td><td class="num">14.14.0</td><td>KokonutUI animations; honours reduced motion</td><td>MIT</td><td>1</td></tr>
+<tr><td><code>@fontsource-variable/plus-jakarta-sans</code></td><td class="num">5.3.0</td><td>Self-hosted Plus Jakarta Sans (0002)</td><td>OFL-1.1</td><td>1</td></tr>
+<tr><td><code>workbox-window</code></td><td class="num">7.4.1</td><td>“Update ready” prompt in the page</td><td>MIT</td><td>3</td></tr>
+<tr><td><code>@tanstack/react-query</code></td><td class="num">5.108.4</td><td>Loading, caching, offline pause, cursor pages</td><td>MIT</td><td>5</td></tr>
+<tr><td><code>laravel-echo</code>, <code>pusher-js</code></td><td class="num">2.6.3 · 8.6.0</td><td>Live chat over Reverb</td><td>MIT</td><td>5</td></tr>
+<tr><td><code>i18next</code>, <code>react-i18next</code></td><td class="num">27.2.9 · 18.0.3</td><td>English and Filipino</td><td>MIT</td><td>6</td></tr>
+<tr><td><code>react-hook-form</code>, <code>zod</code>, <code>@hookform/resolvers</code></td><td class="num">7.92.0 · 4.6.7 · 7.0.9</td><td>Forms, phone-side checks, 422 errors on fields</td><td>MIT</td><td>6</td></tr>
+<tr><td><code>maplibre-gl</code></td><td class="num">6.19.0</td><td>Approximate-area map</td><td>BSD-3-Clause</td><td>7</td></tr>
+</tbody></table></div>
+<h3 class="tblh">Build and test only (devDependencies)</h3>
+<div class="tablewrap" tabindex="0" role="region" aria-label="Build and test packages"><table>
+<thead><tr><th>Package</th><th>Version</th><th>Why</th><th>Licence</th><th>Decision</th></tr></thead>
+<tbody>
+<tr><td><code>vite</code>, <code>@vitejs/plugin-react</code></td><td class="num">8.4.0 · 6.3.0</td><td>Build tool (same as the admin)</td><td>MIT</td><td>1</td></tr>
+<tr><td><code>tailwindcss</code>, <code>@tailwindcss/vite</code></td><td class="num">4.3.5</td><td>Styling with the U0 tokens (same as the admin)</td><td>MIT</td><td>1</td></tr>
+<tr><td><code>tw-animate-css</code></td><td class="num">1.4.0</td><td>Enter and leave animations shadcn/ui expects</td><td>MIT</td><td>1</td></tr>
+<tr><td><code>vite-plugin-pwa</code></td><td class="num">2.0.0</td><td>Manifest, icons, service worker</td><td>MIT</td><td>3</td></tr>
+<tr><td><code>typescript</code></td><td class="num">6.0.3</td><td>Type checking (pinned below 7 for typescript-eslint)</td><td>Apache-2.0</td><td>8</td></tr>
+<tr><td><code>@types/react</code>, <code>@types/react-dom</code></td><td class="num">19.3.3 · 19.3.0</td><td>Types for React</td><td>MIT</td><td>8</td></tr>
+<tr><td><code>vitest</code>, <code>jsdom</code></td><td class="num">5.1.2 · 31.0.1</td><td>Unit and component tests</td><td>MIT</td><td>8</td></tr>
+<tr><td><code>@testing-library/react</code>, <code>user-event</code>, <code>jest-dom</code></td><td class="num">16.3.3 · 14.6.13 · 8.0.0</td><td>Test components the way a person uses them</td><td>MIT</td><td>8</td></tr>
+<tr><td><code>msw</code></td><td class="num">3.0.8</td><td>Play back the API’s documented answers in tests</td><td>MIT</td><td>8</td></tr>
+<tr><td><code>@playwright/test</code></td><td class="num">1.65.1</td><td>End-to-end core loop in Chrome and Safari engines</td><td>Apache-2.0</td><td>8</td></tr>
+<tr><td><code>@axe-core/playwright</code></td><td class="num">4.14.1</td><td>Accessibility checks in the end-to-end run</td><td>MPL-2.0 (test only)</td><td>8</td></tr>
+<tr><td><code>eslint</code>, <code>typescript-eslint</code></td><td class="num">9.39.5 · 8.74.0</td><td>Lint (ESLint 9 until the a11y rules support 10)</td><td>MIT</td><td>8</td></tr>
+<tr><td><code>eslint-plugin-react-hooks</code>, <code>eslint-plugin-jsx-a11y</code></td><td class="num">7.1.1 · 6.10.2</td><td>React mistakes; accessibility mistakes in markup</td><td>MIT</td><td>8</td></tr>
+<tr><td><code>prettier</code></td><td class="num">3.10.1</td><td>Consistent formatting (like Pint in the API)</td><td>MIT</td><td>8</td></tr>
+</tbody></table></div>
+<p class="ctx" style="margin-top:12px">If you want fewer: <code>prettier</code> and <code>msw</code> are the easiest to drop (−2), at the cost of hand formatting and hand-written API fakes. Choosing decision 4 C or 9 B adds no packages.</p>
+</section>
+
+<div class="part" id="api"><h2>What the API must change first</h2><p>In <code>bayanihan-api</code>, tied to <a href="../../docs/api-gaps.md">docs/api-gaps.md</a></p></div>
+<section class="dec" aria-labelledby="api-h">
+<div class="dh"><span class="dn ghost">!</span><div><h2 id="api-h">Before the app can sign anyone in</h2><p class="q">Phase I1. Assumes decision 4 A; B or C change the first item as noted.</p></div></div>
+<ol class="reclist">
+<li><span class="dn">P1</span><p><b>Browser access.</b> Turn on cookie sign-in (<code>statefulApi()</code>), list <code>app.example.ph</code> in <code>SANCTUM_STATEFUL_DOMAINS</code>, publish <code>config/cors.php</code> with only the app’s origin and <code>supports_credentials</code>, set the cookie scope without widening the admin session. <code>POST auth/otp/verify</code> starts a session (today it only issues a token, <code>AuthService</code>), sign-out and “Sign out everywhere” end it, and phone sessions last weeks. Set <code>REVERB_ALLOWED_ORIGINS</code> (today <code>*</code>). <i>B: CORS and origins only. C: no CORS; proxy Reverb and add the app host to trusted hosts.</i></p></li>
+<li><span class="dn">P2</span><p><b>Readable retry time.</b> <code>Retry-After</code> on every 429 and in CORS <code>exposed_headers</code> (empty today), or <code>errors.retry_after</code>.</p></li>
+<li><span class="dn">P3</span><p><b>IP-keyed limits behind carrier NAT.</b> Re-check <code>health</code> and OTP limits, and that the real client address reaches Laravel through the proxy setup.</p></li>
+<li><span class="dn">P4</span><p><b>Barangay and category lists.</b> Needed by I4–I5 (profile setup, filters, post form).</p></li>
+<li><span class="dn">P5</span><p><b>Consent recorded</b> and <b>P6 dispute result</b> on the task. Not needed to start building, but before the pilot.</p></li>
+<li><span class="dn">O2</span><p><b>Spec update.</b> <code>spec.md</code> still says Flutter and “web app: Not in V1”; once you pick a stack, §1 and §8 (including maps) should say PWA.</p></li>
+</ol>
+<p class="ctx" style="margin-top:12px">Not needed to start: R1 web push (push shows “Coming soon”), R2 maps (nothing on the API side with tile option A), R3 compression (app-side, decision 7b).</p>
+</section>
+
+<div class="part" id="phases"><h2>Draft build phases</h2><p>Written into <code>docs/BUILD_PLAN.md</code> after your decision; each phase ends with a check you can see</p></div>
+<section class="dec" aria-labelledby="ph-h">
+<div class="dh"><span class="dn ghost">I</span><div><h2 id="ph-h">I1–I8</h2><p class="q">Each phase is built against the approved mockup it names and reviewed by you before the next.</p></div></div>
+<div class="tablewrap" tabindex="0" role="region" aria-label="Build phases"><table>
+<thead><tr><th>Phase</th><th>What</th><th>Done when</th></tr></thead>
+<tbody>
+<tr><td class="num"><b>I1</b></td><td>API prerequisites P1–P3 (in <code>bayanihan-api</code>)</td><td>From the app’s origin, a browser signs in by OTP, <code>GET /me</code> answers 200 from the cookie, a POST without the CSRF header is refused, and a 429’s retry time is readable in script</td></tr>
+<tr><td class="num"><b>I2</b></td><td>Repo scaffold and app shell: tokens, font, icons, bottom tabs, routes, light/dark, CI</td><td>The shell matches <code>u0-foundation.html</code> at 360, 768 and desktop in both themes, and CI is green on the first push</td></tr>
+<tr><td class="num"><b>I3</b></td><td>PWA layer: manifest, icon, splash, service worker, offline banner, update prompt, install sheet (Android button, iPhone steps)</td><td>Installs on Android and iPhone, opens offline to the shell with the offline banner, and shows “update ready” after a new deploy</td></tr>
+<tr><td class="num"><b>I4</b></td><td>U1 sign-in and verification</td><td>Every U1 state, including 401, 422 and 429, passes in Playwright against the staging API</td></tr>
+<tr><td class="num"><b>I5</b></td><td>U2 browse and task detail, U3 post a task (map, photo compression, draft, Idempotency-Key)</td><td>A post with photos uploads each under 300 KB, and “Try again” after a dropped connection holds the points once</td></tr>
+<tr><td class="num"><b>I6</b></td><td>U4 apply and choose, U5 work and chat (Reverb)</td><td>Two browsers run apply → pick → start → proof, with chat messages arriving live in both</td></tr>
+<tr><td class="num"><b>I7</b></td><td>U6 ratings, disputes, reports; U7 wallet (FakeGateway)</td><td>Confirm → rate → cash out completes, and a repeated cash-out request with the same key creates one cash-out</td></tr>
+<tr><td class="num"><b>I8</b></td><td>U8 me and notifications, Filipino strings, accessibility pass, production deploy</td><td>The U9 core loop passes in both languages with zero serious axe findings, served over HTTPS from the chosen host</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="dec" id="decisions" aria-labelledby="decisions-h">
+<div class="dh"><span class="dn ghost">?</span><div><h2 id="decisions-h">Decisions needed</h2><p class="q">Answer by number with a letter, or “all recommended”.</p></div></div>
+<ol class="reclist">
+<li><span class="dn">1</span><p><b>Framework:</b> A · React 19 + Vite with KokonutUI/shadcn (recommended), B Vue 3 + shadcn-vue, KokonutUI rebuilt, C Next.js or Nuxt</p></li>
+<li><span class="dn">2</span><p><b>Rendering:</b> A · single-page app as plain files (recommended), B server rendering, C plus pre-built public pages</p></li>
+<li><span class="dn">3</span><p><b>Offline and install:</b> A · vite-plugin-pwa with update prompt (recommended), B hand-written, C Workbox directly</p></li>
+<li><span class="dn">4</span><p><b>Sign-in:</b> A · cookie sign-in on app. + api. subdomains (recommended), B token in the browser, C cookie sign-in on one address</p></li>
+<li><span class="dn">5</span><p><b>Data and chat:</b> A · TanStack Query + Laravel Echo, retries by hand (recommended), B plain fetch, C offline-first database</p></li>
+<li><span class="dn">6</span><p><b>Language and forms:</b> A · i18next; React Hook Form + Zod (recommended), B our own</p></li>
+<li><span class="dn">7</span><p><b>Maps and photos:</b> 7a A · MapLibre + OpenFreeMap (recommended), B Google Maps, C Leaflet; 7b A · own canvas code (recommended), B package</p></li>
+<li><span class="dn">8</span><p><b>Testing:</b> A · TypeScript, Vitest, Testing Library, Playwright + axe (recommended), B JavaScript, end-to-end only</p></li>
+<li><span class="dn">9</span><p><b>Hosting:</b> A · same VPS as the API (recommended for the pilot), B Cloudflare Pages, C Vercel or Netlify</p></li>
+</ol>
+<p class="ctx" style="margin-top:16px">Also confirm: the 42 packages listed, and the domain you will register for <code>example.ph</code>.</p>
+</section>
+
+<section class="dec" id="sources" aria-labelledby="sources-h">
+<div class="dh"><span class="dn ghost">↗</span><div><h2 id="sources-h">Sources, checked 27 Nov 2026</h2><p class="q">Plain links; nothing on this page loads from them.</p></div></div>
+<ul class="srcs">
+<li>Package versions and licences: npm registry, e.g. https://registry.npmjs.org/react (one lookup per package in the tables)</li>
+<li>KokonutUI: https://github.com/kokonut-labs/kokonutui (licence, activity, component source)</li>
+<li>shadcn-vue: https://github.com/unovue/shadcn-vue</li>
+<li>Sanctum SPA vs token auth, CORS, CSRF, broadcasting: https://laravel.com/docs/13.x/sanctum</li>
+<li>Reverb uses the Pusher protocol with Laravel Echo: https://reverb.laravel.com/</li>
+<li>vite-plugin-pwa features and frameworks: https://vite-pwa-org.netlify.app/guide/</li>
+<li>Web push on iPhone needs Home Screen and iOS 16.4: https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/</li>
+<li>Install prompt event not in Safari: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event</li>
+<li>Safari 7-day storage cap (vendor write-up, not Apple): https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide</li>
+<li>OpenFreeMap terms: https://openfreemap.org/</li>
+<li>OpenStreetMap tile policy: https://operations.osmfoundation.org/policies/tiles/</li>
+<li>Cloudflare Pages: https://pages.cloudflare.com/ (free plan limits not re-checked)</li>
+<li>API facts: <code>bayanihan-api</code> package.json, composer.json, bootstrap/app.php, config/sanctum.php, config/reverb.php, routes/channels.php, framework default config/cors.php</li>
+</ul>
+</section>
+</main>
+</body>
+</html>
