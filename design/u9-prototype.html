@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U9 Core loop prototype</title>
+<style>
+:root{color-scheme:light dark;--pbg:#F5F5F4;--pcard:#FFFFFF;--pfg:#1C1917;--pmuted:#57534E;--pline:#E7E5E4;--pline-strong:#8A847F;--pacc:#0F766E;--pacc-soft:#CCFBF1;--pacc-ink:#115E59;--pframe:#292524;--pana:#9A3412;--pana-soft:#FFEDD5;--pben:#1E40AF;--pben-soft:#DBEAFE;--pwarn-soft:#FEF3C7;--pcon:#92400E}
+@media (prefers-color-scheme: dark){:root{--pbg:#0C0A09;--pcard:#171412;--pfg:#F5F5F4;--pmuted:#A8A29E;--pline:#2E2A27;--pline-strong:#78716C;--pacc:#2DD4BF;--pacc-soft:#134E4A;--pacc-ink:#5EEAD4;--pframe:#57534E;--pana:#FDBA74;--pana-soft:#431407;--pben:#93C5FD;--pben-soft:#172554;--pwarn-soft:#451A03;--pcon:#FBBF24}}
+.ph{--bg:#FAFAF9;--card:#FFFFFF;--fg:#1C1917;--muted:#57534E;--line:#E7E5E4;--line-strong:#8A847F;--soft:#F5F5F4;--ok:#15803D;--ok-soft:#DCFCE7;--ok-ink:#166534;--on-ok:#FFFFFF;--warn:#B45309;--warn-soft:#FEF3C7;--warn-ink:#92400E;--bad:#B91C1C;--bad-soft:#FEE2E2;--bad-ink:#B91C1C;--bad-fg:#FFFFFF;--bar:#FAFAF9;--scrim:rgba(12,10,9,.45);--pri:#0F766E;--pri-fg:#FFFFFF;--pri-soft:#CCFBF1;--pri-ink:#115E59;--focus:#0F766E}
+@media (prefers-color-scheme: dark){.ph{--bg:#0C0A09;--card:#1C1917;--fg:#F5F5F4;--muted:#A8A29E;--line:#292524;--line-strong:#78716C;--soft:#292524;--ok:#4ADE80;--ok-soft:#052E16;--ok-ink:#4ADE80;--on-ok:#052E16;--warn:#FBBF24;--warn-soft:#451A03;--warn-ink:#FBBF24;--bad:#F87171;--bad-soft:#450A0A;--bad-ink:#F87171;--bad-fg:#0C0A09;--bar:#0C0A09;--scrim:rgba(0,0,0,.6);--pri:#2DD4BF;--pri-fg:#042F2E;--pri-soft:#134E4A;--pri-ink:#5EEAD4;--focus:#2DD4BF}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--pbg);color:var(--pfg);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--pacc-ink)}
+:focus-visible{outline:3px solid var(--pacc);outline-offset:2px}
+.ph :focus-visible{outline-color:var(--focus)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.skip{position:absolute;left:8px;top:-60px;background:var(--pcard);padding:8px 12px;border-radius:8px;z-index:9}
+.skip:focus{top:8px}
+main{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.kick{margin:0 0 4px;color:var(--pmuted);font-size:14px}
+h1{font-size:28px;line-height:1.2;letter-spacing:-.02em;margin:0 0 6px}
+.lede{margin:0 0 16px;color:var(--pmuted);max-width:75ch}
+.chrome{display:grid;gap:12px;background:var(--pcard);border:1px solid var(--pline);border-radius:14px;padding:12px;margin-bottom:16px}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.rail a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px 0 6px;border:1px solid var(--pline-strong);border-radius:999px;text-decoration:none;color:var(--pfg);font-size:14px;font-weight:600;background:var(--pbg)}
+.rail a i{font-style:normal;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--pline);font-variant-numeric:tabular-nums}
+.rail a.done i{background:var(--pacc);color:#fff}
+.rail a[aria-current]{border:2px solid var(--pacc);color:var(--pacc-ink);padding-left:5px}
+@media (prefers-color-scheme: dark){.rail a.done i{color:#042F2E}}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.grp{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--pmuted)}
+.seg{display:inline-flex;border:1px solid var(--pline-strong);border-radius:10px;overflow:hidden}
+.seg button{min-height:44px;min-width:52px;padding:0 14px;border:0;background:var(--pcard);color:var(--pfg);font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--pline-strong)}
+.seg button[aria-pressed=true]{background:var(--pacc-soft);color:var(--pacc-ink)}
+.pbtn{min-height:44px;padding:0 14px;border:1px solid var(--pline-strong);border-radius:999px;background:var(--pcard);color:var(--pfg);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.pbtn[aria-pressed=true]{background:var(--pwarn-soft);color:var(--pcon);border-color:var(--pcon)}
+.det{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.det legend{float:left;margin-right:8px;font-size:14px;color:var(--pmuted)}
+.det .pbtn{border-style:dashed}
+.viewsw{display:none}
+.widthsw{display:none}
+@media (max-width:767px){.viewsw{display:inline-flex}}
+@media (min-width:820px){.widthsw{display:inline-flex}}
+body.w768 .viewsw{display:inline-flex}
+
+.stage{display:flex;gap:16px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.phone{display:none;margin:0}
+.view-ana #ph-ana,.view-ben #ph-ben{display:block}
+@media (min-width:768px){body:not(.w768) .phone{display:block}}
+.phl{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:15px;font-weight:700}
+.who{display:inline-block;font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px}
+.who.ana{background:var(--pana-soft);color:var(--pana)}.who.ben{background:var(--pben-soft);color:var(--pben)}
+.acts{font-size:12px;font-weight:700;color:var(--pacc-ink);border:1px solid var(--pacc);border-radius:999px;padding:1px 8px}
+.frame{border:6px solid var(--pframe);border-radius:34px;overflow:hidden;width:max-content;max-width:100%}
+.phone.acting .frame{box-shadow:0 0 0 3px var(--pacc)}
+.handoff{flex:1 1 100%;background:var(--pcard);border:1px solid var(--pline);border-left:4px solid var(--pacc);border-radius:12px;padding:12px 14px;font-size:15px}
+.handoff p{margin:0 0 6px}
+#handoff-live,#handoff-row{max-width:736px;margin-inline:auto}
+.handoff .nt{color:var(--pmuted);font-size:14px}
+.handoff .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+@media (min-width:768px) and (max-width:1099px){body:not(.w768) main{padding-left:4px;padding-right:4px}body:not(.w768) .frame{border-width:3px}body:not(.w768) .stage{gap:8px}}
+@media (max-width:419px){.stage{margin-inline:-16px}.frame{border:0;border-radius:0;width:100%}.screen{width:100%;height:680px}.phl{padding-inline:16px}.handoff{margin-inline:16px}}
+.facts{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:14px;color:var(--muted)}
+.facts li+li::before{content:"· ";}
+.facts li.nl{flex-basis:100%}.facts li.nl::before{content:none}
+.apnote{margin:8px 0 0;font-size:15px}
+.pw{display:flex;gap:8px;margin-top:8px}.pw .photo{width:56px;height:56px;flex:none}
+.aptop{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.apfoot{display:flex;justify-content:space-between;align-items:center;margin-top:4px;border-top:1px solid var(--line);padding-top:2px}
+.apc{position:relative}
+.apc .view::after{content:"";position:absolute;inset:0;border-radius:12px}
+.apc .star{position:relative;z-index:1}
+.star{color:var(--muted)}.star[aria-pressed=true]{color:#D97706}.star[aria-pressed=true] svg.i{fill:currentColor}
+.chip svg.i{width:16px;height:16px;vertical-align:-3px}
+.chip[aria-pressed=true] svg.i{fill:currentColor}
+.msg{max-width:85%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:15px}
+.msg.me{align-self:flex-end;background:var(--pri-soft);border-color:transparent}
+.msg p{margin:0}.msg>span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.body>.lnk{align-self:flex-start}
+.hid{font-size:12px;padding:0 6px;border-radius:6px;background:var(--soft)}
+.foot{margin-top:24px;color:var(--pmuted);font-size:14px;max-width:80ch}
+
+/* phone screens: U0 tokens with the U9 accessibility fixes */
+.screen{width:360px;height:720px;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--bg);color:var(--fg);font:16px/1.45 "Plus Jakarta Sans","Avenir Next",Avenir,ui-sans-serif,system-ui,sans-serif}
+body.w768 .screen{width:768px;height:760px}
+body.w768 .screen .appbar,body.w768 .screen .body,body.w768 .screen .dock,body.w768 .screen .offline{padding-left:max(16px,calc((100% - 600px)/2));padding-right:max(16px,calc((100% - 600px)/2))}
+body.w768 .screen .bnav{padding-inline:calc((100% - 600px)/2)}
+body.w768 .screen .toast{left:calc((100% - 568px)/2);right:calc((100% - 568px)/2)}
+.screen button,.screen input,.screen select,.screen textarea{font:inherit;color:inherit}
+.sbar{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 20px;font-size:13px;font-weight:600;background:var(--bar)}
+.sbi{display:flex;gap:4px}.sbi i{display:block;width:12px;height:10px;border-radius:2px;background:currentColor;opacity:.8}.sbi i.b{width:20px}
+.offline{flex:none;display:flex;gap:8px;align-items:center;padding:8px 16px;background:var(--warn-soft);color:var(--warn-ink);font-size:14px}
+.appbar{flex:none;display:flex;align-items:center;gap:4px;min-height:56px;padding:4px 8px}
+.appbar h3{margin:0;font-size:20px;font-weight:700;line-height:1.2;flex:1;padding-left:8px}
+.appbar h3:focus{outline:none}
+.appbar h3:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+.ib{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:999px;border:0;background:transparent;cursor:pointer;color:var(--fg)}
+.ib+h3{padding-left:0}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.body{flex:1;min-height:0;overflow:auto;padding:4px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.body>*{flex:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.card h4,.screen h4{margin:0;font-size:16px;line-height:1.3}
+.cardbtn{display:block;width:100%;text-align:left;cursor:pointer}
+.meta{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.money{margin:4px 0 0;color:var(--pri);font-weight:600;font-variant-numeric:tabular-nums;font-size:15px}
+.money b{font-size:18px;font-weight:800}.money small{color:var(--muted);font-weight:500;font-size:14px}
+.badge{display:inline-flex;align-items:center;gap:4px;min-height:24px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--soft);line-height:1.3}
+.badge.ok{background:var(--ok-soft);color:var(--ok-ink)}.badge.warn{background:var(--warn-soft);color:var(--warn-ink)}.badge.pri{background:var(--pri-soft);color:var(--pri-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.fld{display:grid;gap:6px}
+.fld label,.fld .lb{font-size:14px;font-weight:600}
+.hint{margin:0;font-size:13px;color:var(--muted)}
+.inp{width:100%;min-height:48px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:16px}
+textarea.inp{min-height:88px;resize:vertical}
+.inp[aria-invalid=true]{border:2px solid var(--bad);padding:9px 11px}
+.inp:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pre{display:flex;align-items:stretch}
+.pre span{display:grid;place-items:center;padding:0 12px;border:1px solid var(--line-strong);border-right:0;border-radius:8px 0 0 8px;background:var(--soft);font-weight:600}
+.pre .inp{border-radius:0 8px 8px 0}
+.alert{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:10px;font-size:14px}
+.alert.bad{background:var(--bad-soft);color:var(--bad-ink)}
+.alert.warn{background:var(--warn-soft);color:var(--warn-ink)}
+.alert.ok{background:var(--ok-soft);color:var(--ok-ink)}
+.alert.info{background:var(--pri-soft);color:var(--pri-ink)}
+.alert p{margin:0}
+.fee{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:2px 12px;font-size:15px}
+.fee p{display:flex;justify-content:space-between;gap:12px;margin:0;padding:9px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.fee p:last-child{border-bottom:0;font-weight:700}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;padding:8px 16px;border-radius:8px;border:0;font-weight:700;font-size:16px;cursor:pointer;text-align:center}
+.btn.pri{background:var(--pri);color:var(--pri-fg)}
+.btn.out{background:var(--card);border:1px solid var(--line-strong)}
+.btn.ghost{background:transparent;color:var(--pri-ink)}
+.btn.dst{background:var(--bad);color:var(--bad-fg)}
+.btn.sm{width:auto;min-height:44px;font-size:15px;padding:6px 14px}
+.btn[aria-disabled=true]{opacity:.55;cursor:not-allowed}
+.btn:focus-visible,.cardbtn:focus-visible,.ib:focus-visible,.tab:focus-visible,.lnk:focus-visible,.chip:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.lnk{background:none;border:0;padding:0 4px;min-height:44px;color:var(--pri-ink);font-weight:700;font-size:15px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.dock{flex:none;padding:12px 16px 16px;border-top:1px solid var(--line);background:var(--card);display:grid;gap:4px}
+.dock .why{margin:0;font-size:13px;color:var(--muted);text-align:center}
+.bnav{flex:none;min-height:64px;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:64px;border:0;background:none;font-size:12px;color:var(--muted);cursor:pointer;padding:4px 2px}
+.tab[aria-current=page]{color:var(--pri-ink);font-weight:700}
+.tab .iw{width:52px;height:28px;border-radius:999px;display:grid;place-items:center}
+.tab[aria-current=page] .iw{background:var(--pri-soft)}
+.tab.post .iw{width:52px;height:52px;background:var(--pri);color:var(--pri-fg);margin-top:-18px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:12px;color:var(--muted)}
+.steps li{display:grid;gap:4px}
+.steps li::before{content:"";height:6px;border-radius:3px;background:var(--line)}
+.steps li.on{color:var(--fg);font-weight:600}
+.steps li.on::before{background:var(--pri)}
+.person{display:flex;gap:10px;align-items:center}
+.av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;background:var(--pri-soft);color:var(--pri-ink);position:relative}
+.avb{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:var(--on-ok);display:grid;place-items:center;border:2px solid var(--card)}
+.avb svg.i{width:12px;height:12px;stroke-width:3}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.photo{aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#94A3B8,#475569)}
+.photo.p2{background:linear-gradient(135deg,#A8A29E,#57534E)}.photo.p3{background:linear-gradient(135deg,#7DD3FC,#0E7490)}
+.addph{aspect-ratio:1;border-radius:8px;border:2px dashed var(--line-strong);background:var(--soft);display:grid;place-items:center;color:var(--muted);cursor:pointer;font-size:13px;font-weight:600}
+.prog{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.prog b{display:block;height:100%;background:var(--pri);transition:width .2s ease-out}
+.pin{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.pinmap{height:120px;background:linear-gradient(160deg,#E7E5E4 0 40%,#CFE7EA 40% 100%);position:relative}
+.pinmap::after{content:"";position:absolute;left:46%;top:38%;width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--bad);border:3px solid #fff}
+@media (prefers-color-scheme: dark){.pinmap{background:linear-gradient(160deg,#292524 0 40%,#0E2A2C 40% 100%)}}
+.pin .pb{padding:10px 12px;background:var(--card)}
+.big{font-size:30px;font-weight:800;margin:2px 0 0;font-variant-numeric:tabular-nums;line-height:1.2}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+.tl{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.tl li{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:8px 0;position:relative}
+.tl .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-strong);display:grid;place-items:center;background:var(--card)}
+.tl li.done .dot{background:var(--pri);border-color:var(--pri);color:var(--pri-fg)}
+.tl li.now .dot{border:7px solid var(--pri)}
+.tl b{display:block;font-size:15px}.tl span{font-size:13px;color:var(--muted)}
+.tl .dot svg.i{width:12px;height:12px;stroke-width:3}
+.ok-hero{display:grid;justify-items:center;text-align:center;gap:6px;padding:16px 0 4px}
+.ok-hero .ic{width:64px;height:64px;border-radius:50%;background:var(--ok-soft);color:var(--ok-ink);display:grid;place-items:center}
+.ok-hero .ic svg.i{width:32px;height:32px}
+.ok-hero h4{font-size:20px}
+.ok-hero p{margin:0;color:var(--muted)}
+.chiprow{display:flex;gap:8px;flex-wrap:wrap}
+.chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line-strong);background:var(--card);font-weight:600;font-size:14px;cursor:pointer;font-variant-numeric:tabular-nums}
+.chip[aria-pressed=true]{background:var(--pri-soft);color:var(--pri-ink);border-color:var(--pri)}
+.sw{display:flex;gap:12px;align-items:center;justify-content:space-between;min-height:48px;font-size:15px}
+.sw input{appearance:none;-webkit-appearance:none;margin:0;flex:none;width:52px;height:32px;border-radius:16px;background:var(--muted);position:relative;cursor:pointer}
+.sw input::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:var(--card);transition:left .15s ease-out}
+.sw input:checked{background:var(--pri)}
+.sw input:checked::after{left:24px}
+.sw input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+fieldset.rad{border:0;margin:0;padding:0;display:grid;gap:0}
+fieldset.rad legend{font-size:14px;font-weight:600;padding:0;margin-bottom:4px}
+.ro{display:flex;align-items:center;gap:12px;min-height:48px;border-bottom:1px solid var(--line);font-size:15px;cursor:pointer}
+.ro input{width:22px;height:22px;margin:0;accent-color:var(--pri)}
+.stars{display:flex;justify-content:center;gap:4px;border:0;margin:0;padding:0}
+.stars legend{width:100%;text-align:center;font-weight:700;font-size:18px;margin-bottom:6px;padding:0}
+.stars label{width:52px;height:52px;display:grid;place-items:center;cursor:pointer;border-radius:10px}
+.stars input{position:absolute;opacity:0;width:1px;height:1px}
+.stars svg{width:40px;height:40px;fill:var(--line);stroke:none}
+.stars label.on svg{fill:#D97706}
+.stars input:focus-visible+label{outline:3px solid var(--focus);outline-offset:1px}
+.word{margin:0;text-align:center;font-size:15px;font-weight:600;min-height:22px}
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:3}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:88%;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:8px 16px 16px;display:grid;gap:12px;z-index:4}
+.sheet.anim{animation:up .22s ease-out}
+.sheet .handle{display:block;width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:0 auto}
+.sheet h4{font-size:20px}
+.sheet h4:focus{outline:none}
+.sheet h4:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.sheet p{margin:0}
+@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.toast{position:absolute;left:16px;right:16px;bottom:88px;z-index:5;background:var(--fg);color:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px}
+.toast:empty{display:none}
+.nip{opacity:1}
+.feedh{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.inert-note{font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){.sheet.anim{animation:none}.prog b,.sw input::after{transition:none}}
+</style>
+</head>
+<body class="w360">
+<a class="skip" href="#stage">Skip to the phones</a>
+<main>
+<p class="kick">Bayanihan app · Phase U9 · Prototype · 27 Nov 2026</p>
+<h1>The core loop, clickable</h1>
+<p class="lede">Ana R. (Piapi) posts “Clean the roof gutter before the rains” for 400 pts and Ben S. (Daro, ID verified) does it. Tap through on either phone, jump with the step rail, or try a detour. Everything is fake and runs in this page: no network, nothing saved, a reload starts over. Screens follow the approved mockups u1–u8 with the U9 accessibility fixes. Findings: <a href="u9-handoff.html#a11y">accessibility pass in u9-handoff.html</a>.</p>
+
+<div class="chrome">
+<nav class="rail" aria-label="Core loop steps"><ol id="rail"></ol></nav>
+<div class="ctl">
+<div class="grp viewsw" role="group" aria-label="Show phone"><span aria-hidden="true">Phone</span><span class="seg"><button type="button" id="v-ana" aria-pressed="true">Ana</button><button type="button" id="v-ben" aria-pressed="false">Ben</button></span></div>
+<div class="grp widthsw" role="group" aria-label="Width"><span aria-hidden="true">Width</span><span class="seg"><button type="button" id="w-360" aria-pressed="true">360</button><button type="button" id="w-768" aria-pressed="false">768</button></span></div>
+<button type="button" class="pbtn" id="offline" aria-pressed="false">Offline</button>
+<button type="button" class="pbtn" id="reset">Start over</button>
+</div>
+<fieldset class="det"><legend>Detours</legend>
+<button type="button" class="pbtn" data-detour="otp">Wrong code · step 1</button>
+<button type="button" class="pbtn" data-detour="nosignal">No signal while posting · 2</button>
+<button type="button" class="pbtn" data-detour="tier0">Profile first · 3</button>
+<button type="button" class="pbtn" data-detour="nqd">Not quite done · 7</button>
+<button type="button" class="pbtn" data-detour="notlive">Payments not live · 9</button>
+</fieldset>
+</div>
+
+<div class="stage view-ana" id="stage" tabindex="-1">
+<div class="handoff" id="handoff"><div role="status" aria-live="polite" id="handoff-live"></div><div class="row" id="handoff-row"></div></div>
+<section class="phone" id="ph-ana" aria-labelledby="ph-ana-h"><h2 class="phl" id="ph-ana-h"><span class="who ana">Ana</span> Ana’s phone <span class="acts" id="acts-ana" hidden>Acts now</span></h2><div class="frame"><div class="screen ph" id="scr-ana"></div></div></section>
+<section class="phone" id="ph-ben" aria-labelledby="ph-ben-h"><h2 class="phl" id="ph-ben-h"><span class="who ben">Ben</span> Ben’s phone <span class="acts" id="acts-ben" hidden>Acts now</span></h2><div class="frame"><div class="screen ph" id="scr-ben"></div></div></section>
+</div>
+<p class="foot">Not in the prototype: anything a button says “Not in the prototype” about; it names the mockup where that screen is drawn. Money follows the API rules as data: fee <code>max(intdiv(400 × 5, 100), 10)</code> = 20 pts, cash-out fee ₱15. Endpoints per screen: <a href="u9-handoff.html">u9-handoff.html</a>.</p>
+</main>
+<script>
+(function(){
+const STEPS=['Sign in','Post','Apply','Pick','Start','Proof','Confirm','Rate','Cash out'];
+const ICON={
+back:'<path d="m15 18-6-6 6-6"/>',close:'<path d="M18 6 6 18M6 6l12 12"/>',bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',plus:'<path d="M5 12h14M12 5v14"/>',
+wallet:'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',me:'<circle cx="12" cy="8" r="4.5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+check:'<path d="M20 6 9 17l-5-5"/>',wifi:'<path d="M12 20h.01M8.5 16.4a5 5 0 0 1 7 0M2 2l20 20M5 12.9a10 10 0 0 1 5.2-2.7"/>',alert:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',
+pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',chat:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+loc:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'};
+const svg=(k,lab)=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
+const STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></svg>';
+const WORDS=['Bad','Poor','Okay','Good','Great'];
+const fmt=n=>n.toLocaleString('en-US');
+const money=(n,tail)=>`<span aria-hidden="true"><b>${fmt(n)}</b> pts <small>· ₱${fmt(n)}${tail?' '+tail:''}</small></span><span class="sr">${fmt(n)} points, ${fmt(n)} pesos${tail?' '+tail:''}</span>`;
+const pts=n=>`<span aria-hidden="true">${fmt(n)} pts</span><span class="sr">${fmt(n)} points</span>`;
+const TASK='Clean the roof gutter before the rains';
+
+let S;
+function base(){return{step:1,ana:{avail:1200,held:0},ben:{avail:885,cashing:0},task:'none',applied:false,
+ scr:{ana:'a-phone',ben:'b-browse'},sheet:{ana:null,ben:null},ret:{ana:null,ben:null},toast:{ana:'',ben:''},
+ f:{otp:false,nosignal:false,tier0:false,live:true},otpErr:false,postErr:false,located:false,
+ rated:{ana:0,ben:0},pick:{ana:4,ben:5},cash:null,amt:1000,proof:-1,dispute:false,offline:false,
+ view:'ana',width:360,notice:'',focus:null,star:{},starOnly:false,ap:'ben',anim:{ana:false,ben:false}};}
+function stateAt(n){
+ const s=base();
+ if(n>=2){s.step=2;s.scr.ana='a-browse';}
+ if(n>=3){s.step=3;s.task='open';s.ana.avail=800;s.ana.held=400;s.scr.ana='a-task';s.notice='Ben’s phone: a new task in Piapi shows up in Browse.';}
+ if(n>=4){s.step=4;s.applied=true;s.scr.ben='b-applied';s.scr.ana='a-applicants';s.notice='Ana’s phone: “3 neighbors applied to your task.”';}
+ if(n>=5){s.step=5;s.task='assigned';s.scr.ben='b-job';s.notice='Ben’s phone: “You were picked for Clean the roof gutter…”';}
+ if(n>=6){s.step=6;s.task='in_progress';s.notice='Ana’s phone: “Ben started your task.”';}
+ if(n>=7){s.step=7;s.task='proof_submitted';s.notice='Ana’s phone: “Ben sent photos of the work. Check and confirm.”';}
+ if(n>=8){s.step=8;s.task='completed';s.ana.held=0;s.ben.avail=1265;s.scr.ana='a-done';s.scr.ben='b-done';s.notice='Ben’s phone: “Ana confirmed. 380 pts are in your wallet.”';}
+ if(n>=9){s.step=9;s.rated={ana:4,ben:5};s.scr.ben='b-wallet';s.notice='Both rated, so both ratings now show.';}
+ if(n>=10){s.step=10;s.cash='paid';s.ben.avail=265;s.scr.ben='b-cashstatus';s.notice='Ben’s phone: “₱985 is on its way to GCash •••• 4567.”';}
+ return s;}
+function actor(){const s=S.step;if(s===8)return S.rated.ana?'ben':'ana';return {1:'ana',2:'ana',3:'ben',4:'ana',5:'ben',6:'ben',7:'ana',9:'ben'}[s]||null;}
+const name=p=>p==='ana'?'Ana':'Ben';
+const NEXT={1:'Ana signs in.',2:'Ana posts the task.',3:'Ben applies.',4:'Tap “See 3 applicants” on Ana’s phone, then pick Ben.',5:'Ben starts the task at the house.',6:'Ben sends photos of the work.',7:'Ana checks the work and confirms.',8:'Both rate each other.',9:'Ben cashes out.',10:'Loop complete.'};
+
+/* ---------- building blocks ---------- */
+function net(label,act,cls){cls=cls||'pri';
+ if(S.offline)return `<button type="button" class="btn ${cls}" data-act="offlineNo" aria-disabled="true" aria-describedby="why-${act}">${label}</button><p class="why" id="why-${act}">Needs a connection</p>`;
+ return `<button type="button" class="btn ${cls}" data-act="${act}">${label}</button>`;}
+const btn=(label,act,cls)=>`<button type="button" class="btn ${cls||'pri'}" data-act="${act}">${label}</button>`;
+const nip=(label,file,cls,aria)=>`<button type="button" class="${cls||'btn out'}" data-act="nip" data-file="${file}"${aria?` aria-label="${aria}"`:''}>${label}</button>`;
+function bar(p){const t={ana:'9:41',ben:'9:41'};return `<div class="sbar" aria-hidden="true"><span>${clock()}</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div>`;}
+function clock(){return ['','9:20','9:31','10:02','10:40','8:02','10:12','11:04','11:05','2:40','2:45'][S.step]||'9:41';}
+function appbar(title,lead){return `<div class="appbar">${lead||''}<h3 tabindex="-1" class="st">${title}</h3></div>`;}
+const backBtn=(act,lab)=>`<button type="button" class="ib" data-act="${act}" aria-label="${lab||'Back'}">${svg(lab==='Close'?'close':'back')}</button>`;
+function bnav(p,on){const t=[['home','Browse','nip','u2-browse.html'],['list','My tasks','nip','u4-apply.html'],['plus','Post a task','post',''],['wallet','Wallet',p==='ben'&&S.step>=8?'wallet':'nip','u7-wallet.html'],['me','Me','nip','u8-me.html']];
+ return `<nav class="bnav" aria-label="Main">${t.map(([ic,l,a,f])=>{const cur=on===l?' aria-current="page"':'';
+  if(ic==='plus'){const act=p==='ana'&&S.step===2?'startPost':'nip';return `<button type="button" class="tab post" data-act="${act}" data-file="u3-post.html" aria-label="Post a task"><span class="iw">${svg('plus')}</span></button>`;}
+  return `<button type="button" class="tab" data-act="${a==='wallet'?'wallet':(on===l?'stay':'nip')}" data-file="${f}"${cur}><span class="iw">${svg(ic)}</span>${l}</button>`;}).join('')}</nav>`;}
+function steps4(n){const l=['Picked','Started','Work sent','Paid'];return `<ol class="steps" aria-label="Progress: step ${n} of 4">${l.map((x,i)=>`<li class="${i<n?'on':''}">${x}${i<n?'<span class="sr"> (done)</span>':''}</li>`).join('')}</ol>`;}
+const fee=rows=>`<div class="fee">${rows.map(r=>`<p><span>${r[0]}</span><span>${r[1]}</span></p>`).join('')}</div>`;
+const benRow=`<div class="person"><span class="av">BS<span class="avb" aria-hidden="true">${svg('check')}</span></span><div><h4>Ben S.</h4><div class="chips"><span class="badge ok">ID verified</span><span class="badge"><span aria-hidden="true">★ 4.8 · 12</span><span class="sr">rated 4.8 from 12 reviews</span></span><span class="badge">21 tasks done</span></div></div></div>`;
+const anaRow=`<div class="person"><span class="av">AR<span class="avb" aria-hidden="true">${svg('check')}</span></span><div><h4>Ana R.</h4><div class="chips"><span class="badge ok">ID verified</span><span class="badge"><span aria-hidden="true">★ 4.7 · 9</span><span class="sr">rated 4.7 from 9 reviews</span></span></div></div></div>`;
+const taskCard=(extra)=>`<div class="card"><h4>${TASK}</h4><p class="money">${money(400)}</p><p class="meta">Piapi · Done by Fri 27 Nov, 5:00 PM</p>${extra||''}</div>`;
+function feedCards(withTask){
+ const others=[['Carry groceries from Lee Plaza to my house',250,'Calindagan'],['Fix a leaking kitchen faucet',600,'Bantayan'],['Walk two dogs this weekend',300,'Taclobo']];
+ let h='';
+ if(withTask)h+=`<button type="button" class="card cardbtn" data-act="openDetail"><span class="badge pri">New</span><h4 style="margin-top:6px">${TASK}</h4><span class="money" style="display:block">${money(400)}</span><span class="meta" style="display:block">Piapi · about 1.2 km · by Fri 5:00 PM</span><span class="meta" style="display:block">Ana R. · ID verified · ★ 4.7</span></button>`;
+ h+=others.map(o=>`<button type="button" class="card cardbtn" data-act="nip" data-file="u2-browse.html"><h4>${o[0]}</h4><span class="money" style="display:block">${money(o[1])}</span><span class="meta" style="display:block">${o[2]}</span><span class="inert-note">Not in the prototype</span></button>`).join('');
+ return h;}
+
+/* ---------- screens ---------- */
+const SCR={};
+SCR['a-phone']=()=>({title:'Sign in',body:`<p class="meta" style="margin:0">Enter your mobile number. We’ll text you a 6-digit code.</p>
+<div class="fld"><label for="a-tel">Mobile number</label><div class="pre"><span aria-hidden="true">+63</span><input class="inp" id="a-tel" type="tel" inputmode="tel" autocomplete="tel-national" value="917 555 4821" aria-describedby="a-tel-h"></div><p class="hint" id="a-tel-h">Philippine number, starting with 9</p></div>
+<p class="hint">We only use your number to sign you in. Neighbors never see it.</p>`,dock:net('Send code','sendCode')});
+SCR['a-code']=()=>({title:'Enter the code',lead:backBtn('toPhone'),body:`<p class="meta" style="margin:0">Sent to 0917 555 4821.</p>
+<div class="fld"><label for="a-otp">6-digit code</label><input class="inp" id="a-otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="${S.otpErr?'':'482913'}" style="font-size:24px;letter-spacing:.3em;font-weight:700"${S.otpErr?' aria-invalid="true" aria-describedby="a-otp-e"':''}>
+${S.otpErr?`<div class="alert bad" id="a-otp-e" role="alert">${svg('alert')}<p>That code is not right. 3 tries left.</p></div>`:''}</div>
+<p class="hint">Didn’t get it? Resend in 0:42</p>`,dock:net('Verify','verify')});
+SCR['a-browse']=()=>({title:'Tasks near you',trail:nip(svg('bell'),'u8-me.html','ib','Notifications, not in the prototype'),body:`<p class="feedh">Newest across Dumaguete</p>${feedCards(false)}`,nav:'Browse'});
+SCR['a-post1']=()=>({title:'Post a task',lead:backBtn('cancelPost','Close'),body:`<p class="meta" style="margin:0">Step 1 of 3 · What</p>
+<div class="fld"><label for="p-title">Title</label><input class="inp" id="p-title" value="${TASK}" maxlength="80"></div>
+<div class="fld"><label for="p-cat">Category</label><select class="inp" id="p-cat"><option>Repairs</option><option>House cleaning</option><option>Errands</option></select></div>
+<div class="fld"><label for="p-desc">What needs doing</label><textarea class="inp" id="p-desc">Clear leaves from the gutter on both sides of the house. Ladder needed. About 2 hours.</textarea></div>`,dock:btn('Next','post2')});
+SCR['a-post2']=()=>({title:'Post a task',lead:backBtn('post1'),body:`<p class="meta" style="margin:0">Step 2 of 3 · Where</p>
+<p style="margin:0">Stand at the job and use your phone’s location as the exact spot. Neighbors only see the area until you pick someone.</p>
+${S.located?`<div class="alert ok" role="status">${svg('check')}<p><b>Found</b> · accurate to 12 m · Piapi</p></div><button type="button" class="lnk" data-act="locate">Try again</button>`:btn(svg('loc')+'Use my location','locate','out')}
+<div class="fld"><label for="p-land">Landmark (optional)</label><input class="inp" id="p-land" value="Blue gate beside Nanay Lita’s sari-sari store"></div>`,
+dock:S.located?btn('Next','post3'):`<button type="button" class="btn pri" data-act="needLoc" aria-disabled="true" aria-describedby="why-loc">Next</button><p class="why" id="why-loc">Use your location first</p>`});
+SCR['a-post3']=()=>({title:'Post a task',lead:backBtn('post2'),body:`<p class="meta" style="margin:0">Step 3 of 3 · When and points</p>
+<div class="two"><div class="fld"><label for="p-date">Done by, date</label><input class="inp" id="p-date" type="date" value="2026-11-27"></div><div class="fld"><label for="p-time">Time</label><input class="inp" id="p-time" type="time" value="17:00"></div></div>
+<div class="fld"><label for="p-pts">Points you offer</label><input class="inp" id="p-pts" inputmode="numeric" value="400" aria-describedby="p-pts-h"><p class="hint" id="p-pts-h">1 point = ₱1 · you have ${pts(S.ana.avail)} available</p></div>
+${fee([['Your offer',money(400)],['Fee (5%, at least 10)',pts(20)],['Worker receives',pts(380)],['Held from you now',pts(400)]])}
+<label class="sw"><span>Ask for photos of the finished work</span><input type="checkbox" role="switch" checked></label>`,dock:btn('Review','review')});
+SCR['a-review']=()=>({title:'Review',lead:backBtn('post3'),body:`${taskCard('<p class="meta">Repairs · photo proof on</p>')}
+${fee([['Your offer',money(400)],['Fee (5%)',pts(20)],['Worker receives',pts(380)],['Held from you now',pts(400)]])}
+<p class="hint">You can’t edit a task after posting. The points stay held until the job is done or cancelled.</p>
+${S.postErr?`<div class="alert warn" role="alert">${svg('wifi')}<p><b>That didn’t go through.</b> No points were held. Try again: it sends the same request, so the task can’t post twice.</p></div>`:''}`,
+dock:net(S.postErr?'Try again':'Post task · hold 400 pts','post')});
+SCR['a-posted']=()=>({title:'Task posted',body:`<div class="ok-hero"><span class="ic">${svg('check')}</span><h4>Your task is live</h4><p>${pts(400)} are held until the job is done.</p></div>${taskCard()}`,dock:btn('See your task','toTask')});
+SCR['a-task']=()=>{const t=S.task;let body='',dock='';
+ if(t==='open'){body=taskCard(`<div class="chips"><span class="badge pri">${S.applied?'3 applicants':'Open · no applicants yet'}</span></div>`)+(S.applied?`<p style="margin:0">Pick by Thu 26 Nov, 9:31 AM, or the task closes.</p>`:`<p class="meta" style="margin:0">Neighbors can apply now. We’ll tell you when someone does.</p>`);
+  dock=S.applied?btn('See 3 applicants','toApplicants'):'';}
+ else if(t==='assigned'||t==='in_progress'){body=steps4(t==='assigned'?1:2)+taskCard()+`<div class="card">${benRow}<p class="meta">${t==='assigned'?'Will start Thu 26 Nov, 7:00 AM':'Started at 8:02 AM · checked in near the house'}</p></div>`+pinCard('Ben')+nip(svg('chat')+'Message Ben','u5-work.html','btn out');}
+ else if(t==='proof_submitted'){body=steps4(3)+taskCard()+`<div class="card"><h4>Ben sent 3 photos</h4><div class="photos" style="margin-top:8px"><span class="photo" role="img" aria-label="After photo 1: kitchen-side gutter, cleared"></span><span class="photo p2" role="img" aria-label="After photo 2: front gutter, cleared"></span><span class="photo p3" role="img" aria-label="After photo 3: downspout running clear"></span></div><p class="meta">“Both sides cleared, downspout flushed.”</p></div>
+<div class="alert warn">${svg('clock')}<p><b>Pays Ben automatically Fri 27 Nov, 10:12 AM</b><br>23 hours left</p></div>`;
+  dock=net('Confirm and pay Ben','openConfirm')+`<button type="button" class="lnk" data-act="openNqd">Not quite done?</button>`;}
+ else if(t==='disputed'){return SCR['a-dispute']();}
+ else if(t==='completed'){return SCR['a-done']();}
+ return {title:'Your task',body,dock};};
+function pinCard(other){const shown=S.task!=='completed';return `<div class="pin"><div class="pinmap" role="img" aria-label="Map with the exact spot"></div><div class="pb"><p style="margin:0;font-weight:700">${svg('pin')} Blue gate beside Nanay Lita’s sari-sari store</p><p class="meta">Purok 3, Piapi · exact spot · only you and ${other} see this</p></div></div>`;}
+const APPL=[
+ {id:'ben',ini:'BS',name:'Ben S.',first:'Ben',ver:true,rate:'4.8',n:12,done:21,cat:3,dist:'Under 1 km',start:'Thu 26 Nov, 7:00 AM',note:'May hagdan po ako. Kaya ko bukas ng umaga, mga 2 oras lang. I bag the leaves and take them away.',ph:2,q:2},
+ {id:'joy',ini:'JA',name:'Joy A.',first:'Joy',ver:true,rate:'4.9',n:31,done:40,cat:6,dist:'1–3 km',start:'Wed 25 Nov, 3:00 PM',note:'I clean gutters in Daro and Bantayan often. I bring gloves, bags and a long scoop.',ph:3,q:0},
+ {id:'rico',ini:'RM',name:'Rico M.',first:'Rico',ver:false,rate:'4.6',n:7,done:9,cat:1,dist:'Under 1 km',start:'Thu 26 Nov, 8:00 AM',note:'Taga Piapi lang po ako, malapit lang. Pwede ako kahit maaga.',ph:0,q:0}];
+const STAR_I='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></svg>';
+function apHead(a,big){return `<div class="person"><span class="av">${a.ini}${a.ver?`<span class="avb" aria-hidden="true">${svg('check')}</span>`:''}</span><div style="min-width:0"><h4${big?' style="font-size:18px"':''}>${a.name}</h4><div class="chips">${a.ver?'<span class="badge ok">ID verified</span>':''}<span class="badge"><span aria-hidden="true">★ ${a.rate} · ${a.n}</span><span class="sr">rated ${a.rate} from ${a.n} reviews</span></span><span class="badge">${a.done} tasks done</span></div></div></div>`;}
+function apFacts(a){return `<ul class="facts"><li>${a.cat} in Repairs</li><li>${a.dist}</li><li class="nl">Can start ${a.start}</li></ul><p class="apnote">“${a.note}”</p>${a.ph?`<div class="pw">${Array.from({length:a.ph},(_,k)=>`<span class="photo p${k+1}" role="img" aria-label="${a.first}’s past work, photo ${k+1} of ${a.ph}"></span>`).join('')}</div>`:''}`;}
+SCR['a-applicants']=()=>{const nS=Object.values(S.star).filter(Boolean).length;const list=APPL.filter(a=>!S.starOnly||S.star[a.id]);
+ return {title:'Applicants · 3',lead:backBtn('toTask','Back to your task'),body:`<div class="card" style="padding:10px 12px"><h4 style="font-size:15px">${TASK}</h4><p class="meta" style="margin:2px 0 0">${pts(400)} held · pick by Thu 26 Nov, 9:31 AM</p></div>
+<div class="chiprow">${nip('<span aria-hidden="true">⇅</span> Best match','u4-apply.html','chip','Sort: Best match, not in the prototype')}<button type="button" class="chip" data-act="starOnly" aria-pressed="${S.starOnly}">${STAR_I} Starred ${nS}/5</button></div>
+<p class="hint" style="margin:-4px 0 0">Ordered by Bayanihan: best match first.</p>
+${list.length?list.map(a=>`<div class="card apc"><div class="aptop">${apHead(a)}<button type="button" class="ib star" data-act="star1" data-id="${a.id}" aria-pressed="${!!S.star[a.id]}" aria-label="Star ${a.name}">${STAR_I}</button></div>${apFacts(a)}<div class="apfoot"><span class="meta" style="margin:0">${a.q?`${a.q} questions`:'No questions yet'}</span><button type="button" class="lnk view" data-act="openAp" data-id="${a.id}" aria-label="View ${a.name}">View ›</button></div></div>`).join(''):`<div class="card" style="text-align:center"><h4>No starred applicants yet</h4><p class="meta">Tap the star on a card to shortlist up to 5.</p><button type="button" class="lnk" data-act="starOnly">Show all 3</button></div>`}`};};
+SCR['a-applicant']=()=>{const a=APPL.find(x=>x.id===S.ap)||APPL[0];
+ return {title:'Applicant',lead:backBtn('toApplicants','Back to applicants'),trail:`<button type="button" class="ib star" data-act="star1" data-id="${a.id}" aria-pressed="${!!S.star[a.id]}" aria-label="Star ${a.name}">${STAR_I}</button>`,body:`${apHead(a,true)}${nip('See profile and reviews','u2-browse.html','lnk')}${apFacts(a)}
+<h4>Questions · before you pick</h4>${a.q?`<div class="msg me"><p>Do you have your own ladder? The gutter is about 3 m high.</p><span>You · 9:12 AM</span></div><div class="msg"><p>Opo, 4 m na hagdan. Pwede po ba 7am? Number ko po <span class="hid">hidden</span></p><span>${a.first} · 9:30 AM</span></div>`:`<p class="meta" style="margin:0">No questions yet.</p>`}
+<div class="fld"><label for="apq">Ask ${a.first} something</label><div class="two" style="grid-template-columns:1fr auto"><input class="inp" id="apq" placeholder="Ask ${a.first} something…">${nip('Send','u4-apply.html','btn out sm')}</div><p class="hint">You have ${a.q?2:3} of 3 questions left. Numbers, links and handles are hidden.</p></div>`,
+ dock:btn(`Pick ${a.first} for this task`,a.id==='ben'?'openPick':'pickOther')};};
+SCR['a-report']=()=>({title:'Report a problem',lead:backBtn('toTask'),body:`<p class="meta" style="margin:0">${TASK} · Ben S.</p>
+<fieldset class="rad"><legend>What went wrong?</legend>${[['Not done','The work wasn’t done'],['Not done well','Done, but not as agreed',1],['Didn’t show up',''],['Something else','']].map((r,i)=>`<label class="ro"><input type="radio" name="rsn" ${r[2]?'checked':''}><span><b>${r[0]}</b>${r[1]?`<br><span class="meta">${r[1]}</span>`:''}</span></label>`).join('')}</fieldset>
+<div class="fld"><label for="r-st">What happened</label><textarea class="inp" id="r-st" aria-describedby="r-st-h">The gutter on the kitchen side is still full of leaves.</textarea><p class="hint" id="r-st-h">10 to 1,000 characters</p></div>
+<div class="alert info"><p><b>What happens next</b><br>The 400 pts stay held; automatic payment stops. Ben has until Fri 27 Nov, 3:20 PM to give his side. Our team decides by Sun 29 Nov, 3:20 PM.</p></div>`,dock:net('Report and hold 400 pts','dispute','dst')});
+SCR['a-dispute']=()=>({title:'Problem reported',body:`<ol class="steps" aria-label="Progress: step 1 of 3"><li class="on">Reported<span class="sr"> (done)</span></li><li>Ben’s side</li><li>Decision</li><li style="visibility:hidden"></li></ol>
+<div class="alert info"><p>Decision by Sun 29 Nov, 3:20 PM. The 400 pts stay held until then.</p></div>
+<div class="card"><h4>Your side</h4><p class="meta">Not done well · “The gutter on the kitchen side is still full of leaves.”</p></div>
+<div class="card"><h4>Ben’s side</h4><p class="meta">Waiting · due Fri 27 Nov, 3:20 PM</p></div>`});
+SCR['a-done']=()=>({title:'Task complete',body:`<div class="ok-hero"><span class="ic">${svg('check')}</span><h4>Done. Thank you!</h4><p>Ben received ${pts(380)}.</p></div>${rateCard('ana','Ben')}`});
+function rateCard(p,other){const mine=S.rated[p],theirs=S.rated[p==='ana'?'ben':'ana'];
+ if(!mine)return `<div class="card"><h4>How did ${other} do?</h4><p class="meta">Rate within 14 days. Ratings show once you both rate.</p><div style="margin-top:8px">${btn('Rate '+other,'openRate')}</div></div>`;
+ if(!theirs)return `<div class="card"><h4>Your rating: ${mine} of 5, ${WORDS[mine-1]}</h4><p class="meta"><span class="badge">Hidden</span> ${other} and neighbors see it once ${other} rates you, or on Thu 10 Dec.</p></div>`;
+ return `<div class="card"><h4>Ratings are visible</h4><p class="meta">You gave ${mine} of 5. ${other} gave you ${theirs} of 5.</p></div>`;}
+SCR['b-browse']=()=>({title:'Tasks near you',trail:nip(svg('bell'),'u8-me.html','ib','Notifications, not in the prototype'),body:`<p class="feedh">Newest across Dumaguete</p>${feedCards(S.task==='open'&&!S.applied)}`,nav:'Browse'});
+SCR['b-detail']=()=>({title:'Task',lead:backBtn('toBrowse'),body:`<h4 style="font-size:20px">${TASK}</h4>
+<div class="card"><p class="money" style="margin:0">${money(400,'offered')}</p><p class="meta">You’d receive <b>${pts(380)}</b> after the 20 pt fee</p></div>
+<p class="meta" style="margin:0">${svg('pin')} Piapi, about 1.2 km away (exact spot shared after the pick)</p>
+<p class="meta" style="margin:0">${svg('clock')} Done by Fri 27 Nov, 5:00 PM</p>
+<p style="margin:0">Clear leaves from the gutter on both sides of the house. Ladder needed. About 2 hours.</p>
+<div class="card">${anaRow}</div>`,dock:S.f.tier0?btn('Finish your profile to apply','toProfile'):btn('I can do this','openApply')});
+SCR['b-profile']=()=>({title:'Your profile',lead:backBtn('openDetail'),body:`<p style="margin:0">Finish these to apply. Neighbors see your name, photo and barangay.</p>
+<div class="fld"><label for="b-nm">Name, as on your ID</label><input class="inp" id="b-nm" autocomplete="name" value="Ben Santos" aria-describedby="b-nm-h"><p class="hint" id="b-nm-h">Neighbors see “Ben S.”</p></div>
+<div class="fld"><label for="b-brgy">Barangay</label><select class="inp" id="b-brgy"><option>Daro</option><option>Piapi</option><option>Bantayan</option></select></div>
+<div class="fld"><span class="lb">Photo</span><div class="person"><span class="av">BS</span>${nip('Change photo','u1-signin.html','btn out sm')}</div></div>`,dock:net('Save and go back to the task','saveProfile')});
+SCR['b-apply']=()=>({title:'Apply',lead:backBtn('openDetail','Close'),body:`<div class="card"><h4>${TASK}</h4><p class="money">${pts(380)} <small>you’d receive</small></p></div>
+<div class="two"><div class="fld"><label for="ap-d">I can start, date</label><input class="inp" id="ap-d" type="date" value="2026-11-26"></div><div class="fld"><label for="ap-t">Time</label><input class="inp" id="ap-t" type="time" value="07:00"></div></div>
+<div class="fld"><label for="ap-n">Note to Ana (optional)</label><textarea class="inp" id="ap-n" maxlength="300">May hagdan po ako. Kaya ko bukas ng umaga, mga 2 oras lang. I bag the leaves and take them away.</textarea></div>
+<label class="sw"><span>Show how far I am</span><input type="checkbox" role="switch"></label>`,dock:net('Send application','apply')});
+SCR['b-applied']=()=>({title:'Your application',body:`<div class="card"><h4>${TASK}</h4><p class="money">${pts(380)} <small>you’d receive</small></p><div class="chips"><span class="badge warn">Waiting for Ana</span></div></div>
+<p class="meta" style="margin:0">You can start Thu 26 Nov, 7:00 AM · “May hagdan po ako. Kaya ko bukas ng umaga, mga 2 oras lang.”</p>`,dock:nip('Withdraw','u4-apply.html','btn out')});
+SCR['b-job']=()=>{const t=S.task;let body,dock='';
+ if(t==='assigned'){body=`<div class="alert ok" role="status">${svg('check')}<p><b>You were picked!</b> Start Thu 26 Nov, 7:00 AM.</p></div>`+steps4(1)+taskCard()+pinCard('Ana')+nip('Open in Google Maps','u5-work.html','btn out');dock=btn('Start task','openStart');}
+ else if(t==='in_progress'){body=steps4(2)+taskCard()+pinCard('Ana');dock=btn('Send photos of the work','toProof');}
+ else if(t==='proof_submitted'){body=steps4(3)+taskCard()+`<div class="alert info">${svg('clock')}<p>Waiting for Ana to check. If she doesn’t, you’re paid automatically Fri 27 Nov, 10:12 AM.</p></div>`;}
+ else if(t==='disputed'){body=steps4(3)+`<div class="alert warn" role="status">${svg('alert')}<p><b>Ana reported a problem.</b> The points stay held. Give your side by Fri 27 Nov, 3:20 PM.</p></div>`+taskCard();dock=nip('Give your side','u6-trust.html','btn pri');}
+ return {title:'Your job',body,dock};};
+SCR['b-proof']=()=>{const sending=S.proof>=0&&S.proof<100;return {title:'Photos of the work',lead:sending?'':backBtn('toJob','Close'),body:`<p style="margin:0">Show the finished job. Ana checks these before paying you.</p>
+<div class="photos"><span class="photo" role="img" aria-label="Photo 1: kitchen-side gutter, cleared"></span><span class="photo p2" role="img" aria-label="Photo 2: front gutter, cleared"></span><span class="photo p3" role="img" aria-label="Photo 3: downspout running clear"></span></div>
+${nip('Add photo','u5-work.html','btn out sm')}
+<div class="fld"><label for="pf-n">Note (optional)</label><textarea class="inp" id="pf-n" maxlength="500">Both sides cleared, downspout flushed.</textarea></div>
+${S.proof>=0?`<div class="fld"><span class="lb" id="pf-l">Sending 3 photos</span><div class="prog" role="progressbar" aria-labelledby="pf-l" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${S.proof}"><b style="width:${S.proof}%"></b></div><p class="hint">If it stops, Try again is safe.</p></div>`:''}`,
+dock:sending?`<button type="button" class="btn pri" aria-disabled="true" data-act="busy">Sending… ${S.proof}%</button>`:net('Send 3 photos','sendProof')};};
+SCR['b-done']=()=>({title:'Task complete',body:`<div class="ok-hero"><span class="ic">${svg('check')}</span><h4>Ana confirmed</h4><p>${pts(380)} are in your wallet.</p></div>${rateCard('ben','Ana')}`,dock:btn('Go to Wallet','wallet','out')});
+SCR['b-wallet']=()=>({title:'Wallet',body:`<div class="card"><p class="meta" style="margin:0">Available</p><p class="big">${pts(S.ben.avail)}</p><p class="meta" style="margin:0">₱${fmt(S.ben.avail)}</p><div class="kv"><span>Held for tasks</span><span>${pts(0)}</span></div><div class="kv"><span>Cashing out</span><span>${pts(S.ben.cashing)}</span></div></div>
+${S.f.live?`<div class="two">${nip('Add points','u7-wallet.html','btn out')}${btn('Cash out','toCashout')}</div>`:`<div class="alert info"><p><b>Adding and cashing out open soon</b><br>GCash and Maya payments aren’t switched on yet. Your points, history and payout accounts all work.</p></div>`}
+${S.cash?`<button type="button" class="card cardbtn" data-act="toCashStatus"><h4>Cash-out · ₱985 to GCash •••• 4567</h4><span class="meta" style="display:block">${S.cash==='paid'?'Paid · 2:45 PM':'Processing · requested 2:40 PM'}</span></button>`:''}
+<h4>History</h4><div class="card"><div class="kv" style="margin:0;color:var(--fg)"><span>Task paid · ${TASK}</span><span>+${pts(380)}</span></div><p class="meta">Thu 26 Nov · 11:05 AM</p></div>`,nav:'Wallet'});
+SCR['b-cashout']=()=>{const a=S.amt,ok=a>=100&&a<=Math.min(10000,S.ben.avail);return {title:'Cash out',lead:backBtn('wallet'),body:`
+<div class="fld"><label for="co-a">Points to cash out</label><input class="inp" id="co-a" inputmode="numeric" value="${a}" aria-describedby="co-h"${ok?'':' aria-invalid="true"'}><p class="hint" id="co-h">₱100 to ₱10,000 · once a day · ${pts(S.ben.avail)} available</p></div>
+<div class="chiprow" role="group" aria-label="Quick amounts">${[500,1000,S.ben.avail].map((v,i)=>`<button type="button" class="chip" data-act="amt" data-v="${v}" aria-pressed="${a===v}">${i===2?'All '+fmt(v):fmt(v)}</button>`).join('')}</div>
+<div class="card"><p class="meta" style="margin:0">Send to</p><h4>GCash •••• 4567</h4><p class="meta">Default · in your verified name</p>${nip('Change','u7-wallet.html','btn out sm')}</div>
+${fee([['Cash out',money(a)],['Cash-out fee','₱15'],['GCash receives','₱'+fmt(Math.max(a-15,0))]])}`,
+dock:ok?btn(`Cash out ${fmt(a)} pts · ₱${fmt(a)}`,'openCash'):`<button type="button" class="btn pri" aria-disabled="true" data-act="busy" aria-describedby="co-h">Cash out</button>`};};
+SCR['b-cashstatus']=()=>{const paid=S.cash==='paid';return {title:'Cash-out',lead:backBtn('wallet'),body:`<div class="card"><p class="big">₱985</p><p class="meta">to GCash •••• 4567 · ${pts(1000)} out, ₱15 fee</p></div>
+<ol class="tl" aria-label="Cash-out status"><li class="done"><span class="dot">${svg('check')}</span><div><b>Requested</b><span>Thu 26 Nov, 2:40 PM</span></div></li>
+<li class="${paid?'done':'now'}"><span class="dot">${paid?svg('check'):''}</span><div><b>Processing</b><span>${paid?'Done':'Usually a few minutes'}</span></div></li>
+<li class="${paid?'done':''}"><span class="dot">${paid?svg('check'):''}</span><div><b>Paid</b><span>${paid?'Thu 26 Nov, 2:45 PM':'Not yet'}</span></div></li></ol>`};};
+
+/* ---------- sheets ---------- */
+const SHEET={
+ pick:()=>`<div class="person"><span class="av">BS<span class="avb" aria-hidden="true">${svg('check')}</span></span><div><h4 tabindex="-1" id="sh-h">Pick Ben S.?</h4><p class="meta" style="margin:0">Can start Thu 26 Nov, 7:00 AM</p></div></div><p>Ben gets the exact spot and a chat with you opens. The 2 others are told they weren’t picked. Applications close.</p>${fee([['Held from you',pts(400)],['Fee',pts(20)],['Ben receives',pts(380)]])}<p class="hint">Your 400 pts stay held until you confirm the job is done. If Ben drops out before starting, you can pick again from the others.</p>${net('Pick Ben','pick')}${btn('Not yet','closeSheet','ghost')}`,
+ confirm:()=>`<h4 tabindex="-1" id="sh-h">Confirm and pay Ben?</h4><p>Ben gets the points now. This can’t be undone.</p>${fee([['Held',pts(400)],['Fee',pts(20)],['Ben receives',pts(380)]])}${net('Confirm and pay Ben','confirm')}${btn('Not now','closeSheet','ghost')}`,
+ nqd:()=>`<h4 tabindex="-1" id="sh-h">Not quite done?</h4><p>Message Ben first; most things get sorted in chat. The clock keeps running: Ben is paid automatically Fri 27 Nov, 10:12 AM.</p>${nip(svg('chat')+'Message Ben','u5-work.html','btn out')}${btn('Report a problem','toReport','out')}${btn('Close','closeSheet','ghost')}`,
+ start:()=>`<h4 tabindex="-1" id="sh-h">Start the task?</h4><p>Add before photos if you like; they can only be sent now. Your location is checked once.</p><div class="photos"><button type="button" class="addph" data-act="nip" data-file="u5-work.html">Add photo</button><button type="button" class="addph" data-act="nip" data-file="u5-work.html">Add photo</button><button type="button" class="addph" data-act="nip" data-file="u5-work.html">Add photo</button></div>${net('Start task','start')}${btn('Not now','closeSheet','ghost')}`,
+ rate:(p)=>{const o=p==='ana'?'Ben':'Ana',v=S.pick[p];return `<fieldset class="stars"><legend tabindex="-1" id="sh-h">How did ${o} do?</legend>${[1,2,3,4,5].map(n=>`<input type="radio" name="st-${p}" id="st-${p}-${n}" value="${n}" ${n===v?'checked':''} data-act="star" data-v="${n}"><label for="st-${p}-${n}" class="${n<=v?'on':''}">${STAR}<span class="sr">${n} star${n>1?'s':''}, ${WORDS[n-1]}</span></label>`).join('')}</fieldset><p class="word" aria-hidden="true">${WORDS[v-1]}</p>
+<div class="fld"><label for="rc-${p}">Comment (optional)</label><textarea class="inp" id="rc-${p}" maxlength="300">${p==='ana'?'On time and careful. Thanks, Ben!':'Clear instructions, easy to find.'}</textarea></div><p class="hint">You can’t change a rating after sending.</p>${net('Send rating','sendRate')}${btn('Not now','closeSheet','ghost')}`;},
+ cash:()=>`<h4 tabindex="-1" id="sh-h">Send ₱985 to GCash •••• 4567?</h4>${fee([['Cash out',money(S.amt)],['Fee','₱15'],['GCash receives','₱'+fmt(S.amt-15)]])}${net('Cash out','cashout')}${btn('Not now','closeSheet','ghost')}`};
+
+/* ---------- render ---------- */
+function renderPhone(p){
+ const el=document.getElementById('scr-'+p);const sc=SCR[S.scr[p]]();const sh=S.sheet[p];
+ const inert=sh?' inert':'';
+ el.innerHTML=`${bar(p)}${S.offline?`<div class="offline" role="status">${svg('wifi')}<span><b>You’re offline.</b> Showing what was saved at 10:12 AM.</span></div>`:''}
+<div style="display:contents"${inert}><div class="appbar"${inert}>${sc.lead||''}<h3 tabindex="-1" class="st">${sc.title}</h3>${sc.trail||''}</div>
+<div class="body"${inert}>${sc.body}</div>${sc.dock?`<div class="dock"${inert}>${sc.dock}</div>`:''}${sc.nav?`<div style="display:contents"${inert}>${bnav(p,sc.nav)}</div>`:''}</div>
+${sh?`<div class="scrim" data-act="closeSheet" aria-hidden="true"></div><div class="sheet${S.anim[p]?' anim':''}" role="dialog" aria-modal="true" aria-labelledby="sh-h"><span class="handle" aria-hidden="true"></span>${SHEET[sh](p)}</div>`:''}
+<div class="toast" role="status">${S.toast[p]||''}</div>`;
+ el.querySelectorAll('[inert]').forEach(n=>n.inert=true);S.anim[p]=false;}
+function renderChrome(){
+ const a=actor(),st=Math.min(S.step,10);
+ document.getElementById('rail').innerHTML=STEPS.map((l,i)=>{const n=i+1;const done=n<st,cur=n===st;
+  return `<li><a href="#step-${n}" data-step="${n}" class="${done?'done':''}"${cur?' aria-current="step"':''}><i>${done?'✓':n}</i>${l}${done?'<span class="sr"> (done)</span>':''}</a></li>`;}).join('');
+ ['ana','ben'].forEach(p=>{document.getElementById('ph-'+p).classList.toggle('acting',a===p);document.getElementById('acts-'+p).hidden=a!==p;});
+ const live=document.getElementById('handoff-live');
+ let h=(S.notice?`<p>${S.notice}</p>`:'')+`<p class="nt">${S.step>=10?'<b>Loop complete.</b> Ana paid 400 pts; Ben got 380 and cashed out ₱985.':`Step ${S.step} of 9 · ${S.step===4&&/^a-applicant/.test(S.scr.ana)?'Ana chooses: star a few, tap View to open an applicant and read the questions, then Pick Ben.':NEXT[S.step]}`}</p>`;
+ if(S.dispute)h=`<p><b>Detour finished.</b> The dispute page is a read-only end here; the rest is drawn in u6-trust.html.</p>`;
+ if(S.cash==='processing')h=`<p>In real life the payout takes a few minutes.</p>`;
+ if(live.innerHTML!==h)live.innerHTML=h;
+ let r='';
+ if(a)r+=`<button type="button" class="pbtn" data-chrome="goto" data-p="${a}">Go to ${name(a)}’s phone</button>`;
+ if(S.dispute)r=`<button type="button" class="pbtn" data-chrome="back7">Back to step 7</button>`;
+ if(S.cash==='processing')r=`<button type="button" class="pbtn" data-chrome="paid">Show the payout sent</button>`;
+ if(!S.f.live&&S.step===9)r+=`<button type="button" class="pbtn" data-chrome="live">Turn payments back on</button>`;
+ if(S.step>=10)r=`<button type="button" class="pbtn" data-chrome="over">Start over</button>`;
+ document.getElementById('handoff-row').innerHTML=r;
+ document.body.classList.toggle('w768',S.width===768);document.body.classList.toggle('w360',S.width!==768);
+ const stg=document.getElementById('stage');stg.classList.toggle('view-ana',S.view==='ana');stg.classList.toggle('view-ben',S.view==='ben');
+ setP('v-ana',S.view==='ana');setP('v-ben',S.view==='ben');setP('w-360',S.width===360);setP('w-768',S.width===768);setP('offline',S.offline);}
+const setP=(id,v)=>document.getElementById(id).setAttribute('aria-pressed',String(v));
+function render(){renderPhone('ana');renderPhone('ben');renderChrome();
+ if(S.focus){const [p,sel]=S.focus;S.focus=null;const el=document.getElementById('scr-'+p);const t=sel?el.querySelector(sel):null;
+  (t||el.querySelector(S.sheet[p]?'#sh-h':'h3.st')).focus();}}
+function show(p){if(S.view!==p&&(S.width===768||innerWidth<768))S.view=p;}
+function go(p,scr,focusSel){S.scr[p]=scr;S.sheet[p]=null;S.toast[p]='';S.focus=[p,focusSel||null];}
+function setStep(n){S.step=n;history.replaceState(null,'','#step-'+Math.min(n,9));}
+function openSheet(p,name,el){S.sheet[p]=name;S.anim[p]=true;S.ret[p]=el&&el.dataset.act;S.focus=[p,'#sh-h'];}
+function closeSheet(p){S.sheet[p]=null;const r=S.ret[p];S.focus=[p,r?`[data-act="${r}"]`:null];}
+
+/* ---------- actions ---------- */
+const A={
+ nip:(p,el)=>{S.toast[p]=`Not in the prototype · drawn in ${el.dataset.file}`;S.focus=null;},
+ offlineNo:p=>{S.toast[p]='You’re offline. This needs a connection.';},
+ busy:()=>{},stay:()=>{},needLoc:p=>{S.toast[p]='Use your location first.';},
+ sendCode:p=>go(p,'a-code','#a-otp'),toPhone:p=>go(p,'a-phone'),
+ verify:p=>{if(S.f.otp){S.f.otp=false;S.otpErr=true;go(p,'a-code','#a-otp');return;}S.otpErr=false;setStep(2);go(p,'a-browse');},
+ startPost:p=>go(p,'a-post1'),cancelPost:p=>go(p,'a-browse'),post1:p=>go(p,'a-post1'),post2:p=>go(p,'a-post2'),post3:p=>go(p,'a-post3'),review:p=>go(p,'a-review'),
+ locate:p=>{S.located=true;go(p,'a-post2','[data-act="post3"]');},
+ post:p=>{if(S.f.nosignal){S.f.nosignal=false;S.postErr=true;go(p,'a-review','[data-act="post"]');return;}
+  S.postErr=false;S.ana.avail-=400;S.ana.held+=400;S.task='open';setStep(3);S.notice='Ben’s phone: a new task in Piapi shows up in Browse.';go(p,'a-posted');},
+ toTask:p=>go(p,'a-task'),toApplicants:p=>{const from=S.scr[p]==='a-applicant'?S.ap:null;go(p,'a-applicants',from?`[data-act="openAp"][data-id="${from}"]`:null);},
+ openAp:(p,el)=>{S.ap=el.dataset.id;go(p,'a-applicant');},
+ star1:(p,el)=>{const id=el.dataset.id;const n=Object.values(S.star).filter(Boolean).length;if(!S.star[id]&&n>=5){S.toast[p]='You can star up to 5.';}else{S.star[id]=!S.star[id];S.toast[p]=S.star[id]?'Starred':'Star removed';}S.focus=[p,`[data-act="star1"][data-id="${id}"]`];if(S.starOnly&&!S.star[id]&&S.scr[p]==='a-applicants')S.focus=[p,'[data-act="starOnly"]'];},
+ starOnly:p=>{S.starOnly=!S.starOnly;S.focus=[p,'[data-act="starOnly"]'];},
+ pickOther:p=>{S.toast[p]='The prototype follows Ben. Open Ben S. to pick him.';},
+ openPick:(p,el)=>openSheet(p,'pick',el),closeSheet:p=>closeSheet(p),
+ pick:p=>{S.task='assigned';setStep(5);S.scr.ben='b-job';S.notice='Ben’s phone: “You were picked for Clean the roof gutter…”';go(p,'a-task');},
+ openConfirm:(p,el)=>openSheet(p,'confirm',el),openNqd:(p,el)=>openSheet(p,'nqd',el),
+ confirm:p=>{S.task='completed';S.ana.held=0;S.ben.avail+=380;setStep(8);S.scr.ben='b-done';S.notice='Ben’s phone: “Ana confirmed. 380 pts are in your wallet.”';go(p,'a-done');},
+ toReport:p=>go(p,'a-report'),
+ dispute:p=>{S.task='disputed';S.dispute=true;S.scr.ben='b-job';S.notice='';go(p,'a-dispute');},
+ openRate:(p,el)=>openSheet(p,'rate',el),
+ star:(p,el)=>{S.pick[p]=+el.dataset.v;S.focus=[p,`#st-${p}-${el.dataset.v}`];},
+ sendRate:p=>{S.rated[p]=S.pick[p];const both=S.rated.ana&&S.rated.ben;
+  if(both){setStep(9);S.notice='Both rated, so both ratings now show.';}
+  else S.notice=p==='ana'?'Ben’s phone: “Ana rated you. Rate her too, and both ratings show.”':'Ana’s phone: “Ben rated you.”';
+  go(p,S.scr[p]);},
+ toBrowse:p=>go(p,'b-browse'),openDetail:p=>go(p,'b-detail'),toProfile:p=>go(p,'b-profile'),
+ saveProfile:p=>{S.f.tier0=false;go(p,'b-detail','[data-act="openApply"]');S.toast[p]='Profile saved. You can apply now.';},
+ openApply:p=>go(p,'b-apply'),
+ apply:p=>{S.applied=true;setStep(4);S.notice='Ana’s phone: “3 neighbors applied to your task.”';go(p,'b-applied');},
+ openStart:(p,el)=>openSheet(p,'start',el),
+ start:p=>{S.task='in_progress';setStep(6);S.notice='Ana’s phone: “Ben started your task.”';go(p,'b-job');},
+ toProof:p=>{S.proof=-1;go(p,'b-proof');},toJob:p=>go(p,'b-job'),
+ sendProof:p=>{S.proof=0;go(p,'b-proof','[data-act="busy"]');tick(p);},
+ wallet:p=>go(p,'b-wallet'),toCashout:p=>{S.amt=Math.min(1000,S.ben.avail);go(p,'b-cashout');},
+ amt:(p,el)=>{S.amt=+el.dataset.v;S.focus=[p,`[data-v="${el.dataset.v}"]`];},
+ openCash:(p,el)=>openSheet(p,'cash',el),
+ cashout:p=>{S.ben.avail-=S.amt;S.ben.cashing+=S.amt;S.cash='processing';S.notice='';go(p,'b-cashstatus');},
+ toCashStatus:p=>go(p,'b-cashstatus')};
+function tick(p){const step=()=>{S.proof=Math.min(100,S.proof+25);
+  if(S.proof>=100){S.proof=-1;S.task='proof_submitted';setStep(7);S.notice='Ana’s phone: “Ben sent photos of the work. Check and confirm.”';go(p,'b-job');S.toast[p]='Photos sent.';render();return;}
+  const el=document.getElementById('scr-'+p),had=el.contains(document.activeElement);renderPhone(p);if(had)el.querySelector('[data-act="busy"]').focus();setTimeout(step,350);};
+ setTimeout(step,350);}
+
+/* ---------- events ---------- */
+['ana','ben'].forEach(p=>{const el=document.getElementById('scr-'+p);
+ el.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||!el.contains(t))return;
+  const f=A[t.dataset.act];if(!f)return;if(t.dataset.act!=='nip'&&t.dataset.act!=='offlineNo'&&t.dataset.act!=='needLoc')S.toast[p]='';f(p,t);render();});
+ el.addEventListener('change',e=>{const t=e.target;if(t.id==='co-a'){S.amt=parseInt(t.value.replace(/\D/g,''),10)||0;S.focus=[p,'#co-a'];render();}
+});
+ el.addEventListener('keydown',e=>{if(!S.sheet[p])return;const sh=el.querySelector('.sheet');
+  if(e.key==='Escape'){e.preventDefault();closeSheet(p);render();return;}
+  if(e.key==='Tab'){const f=[...sh.querySelectorAll('button,input:checked,textarea,[tabindex="-1"]')].filter(x=>!x.closest('[inert]'));const fo=f.filter(x=>x.tabIndex>=0);
+   if(!fo.length)return;const first=fo[0],last=fo[fo.length-1];
+   if(e.shiftKey&&(document.activeElement===first||document.activeElement.id==='sh-h')){e.preventDefault();last.focus();}
+   else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});});
+document.getElementById('rail').addEventListener('click',e=>{const a=e.target.closest('a[data-step]');if(!a)return;e.preventDefault();jump(+a.dataset.step);history.pushState(null,'','#step-'+a.dataset.step);
+ document.querySelector(`#rail a[data-step="${a.dataset.step}"]`).focus();});
+function jump(n,keep){const v=S?S.view:'ana',w=S?S.width:360,o=S?S.offline:false;S=stateAt(n);S.view=v;S.width=w;S.offline=o;const a=actor();if(a)show(a);render();}
+document.getElementById('v-ana').onclick=()=>{S.view='ana';renderChrome();};
+document.getElementById('v-ben').onclick=()=>{S.view='ben';renderChrome();};
+document.getElementById('w-360').onclick=()=>{S.width=360;render();};
+document.getElementById('w-768').onclick=()=>{S.width=768;render();};
+document.getElementById('offline').onclick=()=>{S.offline=!S.offline;render();};
+document.getElementById('reset').onclick=()=>{S=null;jump(1);history.replaceState(null,'','#step-1');};
+document.querySelectorAll('[data-detour]').forEach(b=>b.onclick=()=>{const d=b.dataset.detour;
+ if(d==='otp'){jump(1);S.scr.ana='a-code';S.f.otp=true;S.toast.ana='Detour: the next Verify gets a wrong code.';}
+ if(d==='nosignal'){jump(2);S.scr.ana='a-review';S.located=true;S.f.nosignal=true;S.toast.ana='Detour: the signal drops on the first try.';}
+ if(d==='tier0'){jump(3);S.f.tier0=true;S.scr.ben='b-detail';S.toast.ben='Detour: Ben hasn’t finished his profile yet.';}
+ if(d==='nqd'){jump(7);S.sheet.ana='nqd';S.ret.ana='openNqd';S.anim.ana=true;}
+ if(d==='notlive'){jump(9);S.f.live=false;}
+ const p=d==='tier0'||d==='notlive'?'ben':'ana';S.view=p;S.focus=[p,null];render();history.replaceState(null,'','#step-'+S.step);});
+document.getElementById('handoff').addEventListener('click',e=>{const b=e.target.closest('[data-chrome]');if(!b)return;const c=b.dataset.chrome;
+ if(c==='goto'){const p=b.dataset.p;S.view=p;S.focus=[p,null];render();document.getElementById('ph-'+p).scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
+ if(c==='back7'){jump(7);}
+ if(c==='paid'){S.cash='paid';S.ben.cashing=0;setStep(10);S.notice='Ben’s phone: “₱985 is on its way to GCash •••• 4567.”';go('ben','b-cashstatus');S.view='ben';render();}
+ if(c==='live'){S.f.live=true;S.focus=['ben',null];render();}
+ if(c==='over'){S=null;jump(1);history.replaceState(null,'','#step-1');document.getElementById('reset').focus();}});
+addEventListener('hashchange',()=>{const m=location.hash.match(/step-(\d)/);if(m&&+m[1]!==Math.min(S.step,9))jump(+m[1]);});
+const m=location.hash.match(/step-(\d)/);S=null;jump(m?+m[1]:1);
+})();
+</script>
+</body>
+</html>

@@ -72,6 +72,8 @@ Notification list and push permission prompt, own profile and edit, skills, publ
 
 ## U9 — Clickable prototype and handoff
 
+Status: approved 2026-11-27 — `design/u9-prototype.html`, `design/u9-handoff.html` and `docs/api-gaps.md`, decisions in `docs/decisions/0011-prototype-and-handoff.md`. Accessibility fixes applied to the shared CSS in u0–u8.
+
 Link the approved screens into click-through flows for the core loop (post → apply → pick → start → proof → confirm → rate → cash out), an accessibility pass, and a handoff table mapping every screen and state to its endpoint and error codes, plus a list of API gaps found during design.
 
 ## U10 — Stack decision (owner)

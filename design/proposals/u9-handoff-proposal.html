@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U9 Prototype and handoff</title>
+<style>
+.ph{--bg:#FAFAF9;--card:#FFFFFF;--fg:#1C1917;--muted:#57534E;--line:#E7E5E4;--soft:#F5F5F4;--ok:#15803D;--ok-soft:#DCFCE7;--ok-ink:#166534;--warn:#B45309;--warn-soft:#FEF3C7;--warn-ink:#92400E;--bad:#B91C1C;--bad-soft:#FEE2E2;--bad-ink:#B91C1C;--bar:#FAFAF9;--scrim:rgba(12,10,9,.45);--pri:#0F766E;--pri-fg:#FFFFFF;--pri-soft:#CCFBF1;--pri-ink:#115E59;}
+@media (prefers-color-scheme: dark){.ph:not(.light){--bg:#0C0A09;--card:#1C1917;--fg:#F5F5F4;--muted:#A8A29E;--line:#292524;--soft:#292524;--ok:#4ADE80;--ok-soft:#052E16;--ok-ink:#4ADE80;--warn:#FBBF24;--warn-soft:#451A03;--warn-ink:#FBBF24;--bad:#F87171;--bad-soft:#450A0A;--bad-ink:#F87171;--bar:#0C0A09;--scrim:rgba(0,0,0,.6);--pri:#2DD4BF;--pri-fg:#042F2E;--pri-soft:#134E4A;--pri-ink:#5EEAD4;}}
+
+:root{color-scheme:light dark;--pbg:#F5F5F4;--pcard:#FFFFFF;--pfg:#1C1917;--pmuted:#57534E;--pline:#E7E5E4;--pacc:#0F766E;--pacc-soft:#CCFBF1;--pacc-ink:#115E59;--pframe:#292524;--ppro:#166534;--pcon:#92400E;--pbad:#B91C1C;--pbad-soft:#FEE2E2;--pwarn-soft:#FEF3C7;--pok-soft:#DCFCE7;--pana:#9A3412;--pana-soft:#FFEDD5;--pben:#1E40AF;--pben-soft:#DBEAFE;}
+@media (prefers-color-scheme: dark){:root{--pbg:#0C0A09;--pcard:#171412;--pfg:#F5F5F4;--pmuted:#A8A29E;--pline:#2E2A27;--pacc:#2DD4BF;--pacc-soft:#134E4A;--pacc-ink:#5EEAD4;--pframe:#57534E;--ppro:#4ADE80;--pcon:#FBBF24;--pbad:#F87171;--pbad-soft:#450A0A;--pwarn-soft:#451A03;--pok-soft:#052E16;--pana:#FDBA74;--pana-soft:#431407;--pben:#93C5FD;--pben-soft:#172554;}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--pbg);color:var(--pfg);font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1120px;margin:0 auto;padding:32px 16px 80px}
+a{color:var(--pacc-ink)}
+a:focus-visible{outline:3px solid var(--pacc);outline-offset:2px;border-radius:4px}
+code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--pline);padding:1px 5px;border-radius:6px;overflow-wrap:anywhere}
+h1{font-size:30px;line-height:1.2;letter-spacing:-.02em;margin:0 0 8px}
+.kick{margin:0 0 6px;color:var(--pmuted)}
+.lede{color:var(--pmuted);max-width:72ch;margin:0 0 20px}
+.how{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));margin-bottom:16px}
+.box{background:var(--pcard);border:1px solid var(--pline);border-radius:12px;padding:16px;min-width:0}
+.box h3{margin:0 0 8px;font-size:16px}
+.box p{margin:0}
+.box ul,.box ol{margin:0;padding-left:18px}.box li{margin:4px 0}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 14px;border:1px solid var(--pline);border-radius:999px;background:var(--pcard);text-decoration:none;color:var(--pfg);font-size:14px}
+.toc a b{color:var(--pacc-ink)}
+.part{margin:72px 0 0;padding-top:20px;border-top:2px solid var(--pfg);display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.part h2{margin:0;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.part p{margin:0;color:var(--pmuted);font-size:15px}
+.dec{margin-top:48px;scroll-margin-top:16px}
+.dh{display:flex;gap:14px;align-items:flex-start;margin-bottom:8px}
+.dh h2,.dh h3{margin:2px 0;font-size:22px;letter-spacing:-.01em;line-height:1.25}
+.q{margin:0;color:var(--pmuted)}
+.dn{flex:none;min-width:44px;height:44px;padding:0 8px;border-radius:12px;background:var(--pacc);color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.dn.ghost{background:var(--pacc-soft);color:var(--pacc-ink)}
+@media (prefers-color-scheme: dark){.dn{color:#042F2E}.dn.ghost{color:var(--pacc-ink)}}
+.ctx{margin:8px 0 16px;color:var(--pmuted);font-size:15px;max-width:90ch}
+.opts{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start}
+.opt{background:var(--pcard);border:1px solid var(--pline);border-radius:14px;padding:12px;min-width:0}
+.opt.rec{border:2px solid var(--pacc);padding:11px}
+.oh{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.oh h4{margin:0;font-size:16px;flex:1;min-width:0;line-height:1.3}
+.ol{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:800;background:var(--pline);font-size:14px;flex:none}
+.opt.rec .ol{background:var(--pacc);color:#fff}
+@media (prefers-color-scheme: dark){.opt.rec .ol{color:#042F2E}}
+.recb{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--pacc-soft);color:var(--pacc-ink)}
+.pc{list-style:none;margin:12px 0 0;padding:0;font-size:14px}
+.pc li{position:relative;padding-left:22px;margin:6px 0}
+.pc li::before{position:absolute;left:0;top:0;font-weight:800;width:16px;text-align:center}
+.pc li.pro::before{content:"+";color:var(--ppro)}
+.pc li.con::before{content:"\2013";color:var(--pcon)}
+.recline{margin:16px 0 0;padding:12px 16px;border-left:4px solid var(--pacc);background:var(--pcard);border-radius:0 10px 10px 0;max-width:90ch}
+.tblh{margin:24px 0 8px;font-size:16px}
+.tablewrap{overflow-x:auto;background:var(--pcard);border:1px solid var(--pline);border-radius:12px}
+.tablewrap:focus-visible{outline:3px solid var(--pacc);outline-offset:2px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--pline);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{color:var(--pmuted);font-weight:600;white-space:nowrap}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+td.ms{font-variant-numeric:tabular-nums;min-width:150px}
+table.wide{min-width:960px}
+table.wide td:nth-child(2){min-width:180px}
+.sev{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.sev.h{background:var(--pbad-soft);color:var(--pbad)}
+.sev.m{background:var(--pwarn-soft);color:var(--pcon)}
+.sev.l{background:var(--pline);color:var(--pfg)}
+.sev.p{background:var(--pok-soft);color:var(--ppro)}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 7px;border-radius:6px;border:1px solid var(--pline);white-space:nowrap;margin:1px 0}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;border:1px solid var(--pline);margin-right:2px}
+.gapg{margin-top:16px}
+.gapg h4{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gapl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.gapl li{background:var(--pcard);border:1px solid var(--pline);border-radius:10px;padding:10px 12px;font-size:14px}
+.gapl li b{display:block;font-size:15px;margin-bottom:2px}
+.gapl .src{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.reclist{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.reclist li{display:flex;gap:12px;align-items:flex-start;background:var(--pcard);border:1px solid var(--pline);border-radius:10px;padding:10px 12px}
+.reclist .dn{min-width:40px;height:32px;font-size:15px;border-radius:9px}
+.reclist p{margin:0}
+
+/* sketch boards (option drawings) */
+.wf{background:var(--pbg);border:1px dashed var(--pline);border-radius:10px;padding:12px;font-size:12px;line-height:1.35;color:var(--pfg);min-height:150px;display:flex;flex-direction:column;gap:8px}
+.wf .row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.wf .col{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.wf .file{border:1px solid var(--pline);background:var(--pcard);border-radius:6px;padding:6px 8px;font:600 11px ui-monospace,Menlo,monospace;overflow-wrap:anywhere}
+.wf .file.on{border-color:var(--pacc);box-shadow:inset 3px 0 0 var(--pacc)}
+.wf .mph{width:58px;height:104px;flex:none;border:3px solid var(--pframe);border-radius:12px;background:var(--pcard);display:flex;flex-direction:column;gap:4px;padding:6px 5px;position:relative}
+.wf .mph.wide{width:150px;height:104px}
+.wf .mph i{display:block;height:6px;border-radius:3px;background:var(--pline)}
+.wf .mph i.p{background:var(--pacc)}
+.wf .mph i.s{width:60%}
+.wf .mph .lab{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font:700 10px/1 ui-sans-serif,system-ui,sans-serif;padding:3px 6px;border-radius:999px;white-space:nowrap}
+.lab.ana,.who.ana{background:var(--pana-soft);color:var(--pana)}
+.lab.ben,.who.ben{background:var(--pben-soft);color:var(--pben)}
+.wf .mph .grow{flex:1}
+.wf .arrow{align-self:center;color:var(--pmuted);font-weight:700}
+.wf .chips{display:flex;flex-wrap:wrap;gap:4px}
+.wf .chips span{border:1px solid var(--pline);background:var(--pcard);border-radius:999px;padding:2px 7px;font-size:11px;font-weight:600}
+.wf .chips span.on{background:var(--pacc);border-color:var(--pacc);color:#fff}
+@media (prefers-color-scheme: dark){.wf .chips span.on{color:#042F2E}}
+.wf .chips span.det{border-style:dashed;color:var(--pcon)}
+.wf .note{color:var(--pmuted);font-size:11px;margin:0}
+.wf .seg{display:inline-flex;border:1px solid var(--pline);border-radius:8px;overflow:hidden;background:var(--pcard);align-self:flex-start}
+.wf .seg span{padding:3px 9px;font-weight:700;font-size:11px}
+.wf .seg span.on{background:var(--pacc-soft);color:var(--pacc-ink)}
+.wf .toastw{background:var(--pfg);color:var(--pbg);border-radius:8px;padding:6px 8px;font-size:11px;font-weight:600}
+.wf .bar{height:8px;border-radius:4px;background:var(--pline);overflow:hidden}.wf .bar b{display:block;height:100%;background:var(--pacc)}
+.wf .gridt{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:1px;background:var(--pline);border:1px solid var(--pline);border-radius:6px;overflow:hidden;font-size:11px}
+.wf .gridt span{background:var(--pcard);padding:4px 6px;overflow-wrap:anywhere}
+.wf .gridt span.h{font-weight:700;color:var(--pmuted);background:var(--pbg)}
+.wf .tier{border-radius:6px;padding:5px 8px;font-weight:700;font-size:11px}
+.wf .t1{background:var(--pbad-soft);color:var(--pbad)}.wf .t2{background:var(--pwarn-soft);color:var(--pcon)}.wf .t3{background:var(--pline)}.wf .t4{background:var(--pacc-soft);color:var(--pacc-ink)}
+
+/* storyboard */
+.story{list-style:none;margin:0;padding:0;display:grid;gap:16px 12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.story li{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;min-width:0}
+.story .cap{font-size:13px;line-height:1.35}
+.story .cap b{display:block;font-size:14px}
+.who{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.bal{font-size:12px;color:var(--pmuted);font-variant-numeric:tabular-nums}
+
+/* phone screens (U0 tokens) */
+.ph{width:max-content;max-width:100%;margin:0 auto;border:5px solid var(--pframe);border-radius:24px;overflow:hidden;background:var(--bg)}
+.ph .screen{width:360px;height:640px;zoom:.4;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--bg);color:var(--fg);font:16px/1.4 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:left}
+.ph.md .screen{zoom:.58}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sbar{height:28px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 20px;font-size:13px;font-weight:600;background:var(--bar)}
+.sbi{display:flex;gap:4px}.sbi i{display:block;width:12px;height:10px;border-radius:2px;background:currentColor;opacity:.8}.sbi i.b{width:20px}
+.appbar{display:flex;align-items:center;gap:4px;padding:8px 8px 4px 8px;min-height:56px;flex:none}
+.appbar h3{font-size:20px;font-weight:700;margin:0;flex:1;line-height:1.2}
+.ib{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:999px;color:var(--fg)}
+.body{flex:1;min-height:0;padding:4px 16px 12px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.card h4{margin:0;font-size:16px;line-height:1.3}
+.money{margin:4px 0 0;font-size:15px;color:var(--pri);font-weight:600;font-variant-numeric:tabular-nums}
+.money b{font-size:18px;font-weight:800}.money small{font-size:14px;color:var(--muted);font-weight:500}
+.meta{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.lbl{font-size:14px;font-weight:600;margin:0 0 6px}
+.inp{display:flex;align-items:center;min-height:48px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:16px}
+.inp.code{justify-content:center;font-size:28px;font-weight:700;letter-spacing:.4em;height:56px;border:2px solid var(--pri);font-variant-numeric:tabular-nums}
+.fee{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 12px;font-size:15px}
+.fee p{display:flex;justify-content:space-between;margin:0;padding:8px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.fee p:last-child{border-bottom:0;font-weight:700}
+.fee p span:last-child{font-weight:600}
+.btn{display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:8px;font-weight:700;font-size:16px;width:100%}
+.btn.pri{background:var(--pri);color:var(--pri-fg)}
+.btn.out{border:1px solid var(--line);background:var(--card)}
+.dock{flex:none;padding:12px 16px 16px;border-top:1px solid var(--line);background:var(--card);display:grid;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;min-height:24px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--soft)}
+.badge.ok{background:var(--ok-soft);color:var(--ok-ink)}.badge.warn{background:var(--warn-soft);color:var(--warn-ink)}.badge.pri{background:var(--pri-soft);color:var(--pri-ink)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.steps i{height:6px;border-radius:3px;background:var(--line)}.steps i.on{background:var(--pri)}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.photos i{aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#94A3B8,#475569)}
+.photos i.add{background:var(--soft);border:2px dashed var(--line)}
+.prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.prog b{display:block;height:100%;width:72%;background:var(--pri)}
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg);border-radius:20px 20px 0 0;padding:8px 16px 16px;display:grid;gap:12px}
+.handle{display:block;width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto}
+.sheet h4{margin:0;font-size:20px}
+.stars{display:flex;justify-content:center;gap:8px}.stars svg{width:44px;height:44px;fill:#D97706;stroke:none}.stars svg.off{fill:var(--line)}
+.person{display:flex;gap:10px;align-items:center}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--pri-soft);color:var(--pri-ink);flex:none}
+.count{font-size:13px;color:var(--muted);margin:0}
+.bnav{flex:none;height:64px;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card)}
+.bnav span{display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.bnav span.post b{width:48px;height:48px;border-radius:999px;background:var(--pri);color:var(--pri-fg);display:grid;place-items:center;margin-top:-18px}
+.wbal{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.wbal .big{font-size:32px;font-weight:800;margin:0;font-variant-numeric:tabular-nums}
+.wbal .row2{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-top:8px;font-variant-numeric:tabular-nums}
+
+/* shell preview (D4 / storyboard header) */
+.shell{background:var(--pcard);border:1px solid var(--pline);border-radius:14px;padding:12px;display:grid;gap:12px}
+.rail{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rail .st{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border:1px solid var(--pline);border-radius:999px;font-size:13px;font-weight:600;background:var(--pbg)}
+.rail .st i{font-style:normal;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:var(--pline)}
+.rail .st.done i{background:var(--pacc);color:#fff}
+.rail .st.cur{border:2px solid var(--pacc);color:var(--pacc-ink)}
+@media (prefers-color-scheme: dark){.rail .st.done i{color:#042F2E}}
+.ctrls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px}
+.ctrls .seg2{display:inline-flex;border:1px solid var(--pline);border-radius:8px;overflow:hidden}
+.ctrls .seg2 span{padding:6px 12px;font-weight:700}
+.ctrls .seg2 span.on{background:var(--pacc-soft);color:var(--pacc-ink)}
+.ctrls .pill{border:1px solid var(--pline);border-radius:999px;padding:6px 12px;font-weight:600}
+.duo{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.duo figure{margin:0;display:grid;gap:6px;justify-items:center}
+.duo figcaption{font-size:13px;color:var(--pmuted)}
+.handoff{align-self:center;max-width:180px;background:var(--pfg);color:var(--pbg);border-radius:12px;padding:10px 12px;font-size:13px}
+.handoff b{display:block}
+.handoff span{display:inline-block;margin-top:6px;text-decoration:underline;font-weight:700}
+@media (max-width:767px){.duo .alt{display:none}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<main>
+<p class="kick">Bayanihan app · Phase U9 · Proposal · 27 Nov 2026</p>
+<h1>Prototype, accessibility pass and handoff: choices to make</h1>
+<p class="lede">U9 turns the nine approved mockups into three things the build (U10) can start from: a click-through prototype of the core loop, an accessibility pass, and a handoff that maps every screen to its endpoints and lists the API gaps in one place. Twelve numbered decisions below, each with options and a recommendation. Answer by number, or say “all recommended”. Fake Dumaguete data, as in U8: Ana R. (Piapi, tier 1) posts “Clean the roof gutter before the rains” for 400 pts; Ben S. (Daro, ID verified, 4.8 · 12) does it.</p>
+<div class="how">
+<div class="box"><h3>What is fixed</h3><p>Every screen, copy and state in <code>design/u0-foundation.html</code> … <code>design/u8-me.html</code> and decisions 0002–0010. U9 adds no new screens; the prototype reuses the approved ones as drawn. Only fields in <code>openapi.yaml</code>.</p></div>
+<div class="box"><h3>What you decide</h3><p>12 items in three parts: prototype (1–6), accessibility (7–9), handoff (10–12). The teal-bordered option is recommended.</p></div>
+<div class="box"><h3>After approval</h3><p>Step 2 writes the files listed under <a href="#files">What U9 produces</a>, each reviewed in Lavish. No package, framework or network call.</p></div>
+</div>
+<nav aria-label="Sections"><ul class="toc">
+<li><a href="#story">Core loop</a></li>
+<li><a href="#d1"><b>1</b> One file</a></li><li><a href="#d2"><b>2</b> Two phones</a></li><li><a href="#d3"><b>3</b> Detours</a></li><li><a href="#d4"><b>4</b> Jump to a step</a></li><li><a href="#d5"><b>5</b> Faked state</a></li><li><a href="#d6"><b>6</b> Widths</a></li>
+<li><a href="#d7"><b>7</b> Standard</a></li><li><a href="#d8"><b>8</b> How it’s checked</a></li><li><a href="#d9"><b>9</b> Report and fix</a></li>
+<li><a href="#d10"><b>10</b> Handoff format</a></li><li><a href="#d11"><b>11</b> Table grouping</a></li><li><a href="#d12"><b>12</b> Gap priority</a></li>
+<li><a href="#a11y">Findings sample</a></li><li><a href="#handoff">Handoff sample</a></li><li><a href="#files">What U9 produces</a></li><li><a href="#decisions">Decisions needed</a></li>
+</ul></nav>
+
+<!-- ========== STORYBOARD ========== -->
+<section class="dec" id="story" aria-labelledby="story-h">
+<div class="dh"><span class="dn ghost">→</span><div><h2 id="story-h">The core loop, as the prototype would play it</h2><p class="q">Nine steps across two phones. The chip says whose phone; the line under it says where the points are after the step.</p></div></div>
+<p class="ctx">Fee for a 400-pt task: <code>max(intdiv(400 × 5, 100), 10)</code> = 20, so Ben receives 380. Cash-out has a flat ₱15 fee (spec §5), so 1,000 pts out lands as ₱985 in GCash. Starting balances: Ana 1,200 available; Ben 885 available.</p>
+<ol class="story">
+<li><div class="ph" role="img" aria-label="Step 1, Ana's phone: enter the 6-digit code"><div class="screen"><div class="sbar"><span>9:20</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span><h3>Enter the code</h3></div><div class="body"><p class="meta" style="margin:0">We sent a 6-digit code to your number ending 4821.</p><div class="inp code">4 8 2 _ _ _</div><p class="count">Resend in 0:42</p></div><div class="dock"><span class="btn pri">Verify</span></div></div></div><div class="cap"><span class="who ana">Ana</span><b>1 · Sign in</b>Code, then Browse</div><div class="bal">Ana 1,200 available</div></li>
+<li><div class="ph" role="img" aria-label="Step 2, Ana's phone: review and post, hold 400 points"><div class="screen"><div class="sbar"><span>9:31</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span><h3>Review</h3></div><div class="body"><div class="card"><h4>Clean the roof gutter before the rains</h4><p class="meta">Piapi · Done by Fri 27 Nov, 5:00 PM</p></div><div class="fee"><p><span>Your offer</span><span>400 pts · ₱400</span></p><p><span>Fee (5%)</span><span>20 pts</span></p><p><span>Worker receives</span><span>380 pts</span></p><p><span>Held from you now</span><span>400 pts</span></p></div></div><div class="dock"><span class="btn pri">Post task · hold 400 pts</span></div></div></div><div class="cap"><span class="who ana">Ana</span><b>2 · Post</b>Three steps, then Review</div><div class="bal">Ana 800 · 400 held</div></li>
+<li><div class="ph" role="img" aria-label="Step 3, Ben's phone: apply, 380 points you'd receive"><div class="screen"><div class="sbar"><span>10:02</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span><h3>Apply</h3></div><div class="body"><div class="card"><h4>Clean the roof gutter before the rains</h4><p class="money"><b>380</b> pts <small>you’d receive</small></p></div><div><p class="lbl">I can start</p><div class="inp">Thu 26 Nov · 8:00 AM</div></div><div><p class="lbl">Note (optional)</p><div class="inp" style="min-height:88px;align-items:flex-start;padding-top:12px">I have a ladder. Done in 2 hours.</div></div></div><div class="dock"><span class="btn pri">Send application</span></div></div></div><div class="cap"><span class="who ben">Ben</span><b>3 · Apply</b>From the feed card</div><div class="bal">Ben 885 available</div></li>
+<li><div class="ph" role="img" aria-label="Step 4, Ana's phone: pick Ben confirm sheet"><div class="screen"><div class="sbar"><span>10:40</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><h3 style="padding-left:8px">Applicants · 3</h3></div><div class="body"><div class="card"><div class="person"><span class="av">BS</span><div><h4>Ben S.</h4><span class="badge ok">ID verified</span> <span class="badge">4.8 · 12</span></div></div></div></div><div class="scrim"></div><div class="sheet"><span class="handle"></span><h4>Pick Ben S.?</h4><p class="meta" style="margin:0">Ben sees the exact spot. The other 2 are told.</p><div class="fee"><p><span>Held</span><span>400 pts</span></p><p><span>Fee</span><span>20 pts</span></p><p><span>Ben receives</span><span>380 pts</span></p></div><span class="btn pri">Pick Ben</span></div></div></div><div class="cap"><span class="who ana">Ana</span><b>4 · Pick</b>Applicant list, confirm sheet</div><div class="bal">no change</div></li>
+<li><div class="ph" role="img" aria-label="Step 5, Ben's phone: start task sheet"><div class="screen"><div class="sbar"><span>8:02</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><h3 style="padding-left:8px">Your job</h3></div><div class="body"><div class="steps"><i class="on"></i><i></i><i></i><i></i></div><div class="card"><h4>Clean the roof gutter before the rains</h4><p class="meta">Exact spot · Only you and Ana see this</p></div></div><div class="scrim"></div><div class="sheet"><span class="handle"></span><h4>Start the task?</h4><p class="meta" style="margin:0">Before photos (optional) · your location is checked once</p><div class="photos"><i></i><i class="add"></i><i class="add"></i></div><span class="btn pri">Start task</span></div></div></div><div class="cap"><span class="who ben">Ben</span><b>5 · Start</b>At the job</div><div class="bal">no change</div></li>
+<li><div class="ph" role="img" aria-label="Step 6, Ben's phone: send photos of the work, uploading"><div class="screen"><div class="sbar"><span>10:12</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span><h3>Photos of the work</h3></div><div class="body"><div class="photos"><i></i><i></i><i></i></div><div><p class="lbl">Sending 3 photos · 72%</p><div class="prog"><b></b></div></div><p class="meta" style="margin:0">Safe to retry if the signal drops.</p></div><div class="dock"><span class="btn pri">Sending…</span></div></div></div><div class="cap"><span class="who ben">Ben</span><b>6 · Proof</b>One request, one bar</div><div class="bal">no change</div></li>
+<li><div class="ph" role="img" aria-label="Step 7, Ana's phone: confirm and pay Ben sheet"><div class="screen"><div class="sbar"><span>11:04</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><h3 style="padding-left:8px">Your task</h3></div><div class="body"><div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div><div class="card"><p class="lbl" style="margin:0">Pays Ben automatically</p><p class="meta">Fri 27 Nov, 10:12 AM · 23 h left</p></div></div><div class="scrim"></div><div class="sheet"><span class="handle"></span><h4>Confirm and pay Ben?</h4><div class="fee"><p><span>Held</span><span>400 pts</span></p><p><span>Fee</span><span>20 pts</span></p><p><span>Ben receives</span><span>380 pts</span></p></div><span class="btn pri">Confirm and pay Ben</span></div></div></div><div class="cap"><span class="who ana">Ana</span><b>7 · Confirm</b>On the task page</div><div class="bal">Ana 800 · 0 held · Ben 1,265</div></li>
+<li><div class="ph" role="img" aria-label="Step 8, Ana's phone: rate Ben, four stars chosen"><div class="screen"><div class="sbar"><span>11:05</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><h3 style="padding-left:8px">Task complete</h3></div><div class="body"><p class="meta" style="margin:0">Ben received 380 pts.</p></div><div class="scrim"></div><div class="sheet"><span class="handle"></span><h4>How did Ben do?</h4><div class="stars"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></svg></div><p class="count" style="text-align:center">Good · can’t change after sending</p><span class="btn pri">Send rating</span></div></div></div><div class="cap"><span class="who ana">Ana</span> <span class="who ben">Ben</span><b>8 · Rate</b>Both, hidden until both rate</div><div class="bal">no change</div></li>
+<li><div class="ph" role="img" aria-label="Step 9, Ben's phone: cash out 1,000 points, GCash receives 985 pesos"><div class="screen"><div class="sbar"><span>2:40</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span><h3>Cash out</h3></div><div class="body"><div class="wbal"><p class="meta" style="margin:0">Available</p><p class="big">1,265 pts</p><div class="row2"><span>₱1,265</span><span>0 held</span></div></div><div class="fee"><p><span>Cash out</span><span>1,000 pts</span></p><p><span>Cash-out fee</span><span>₱15</span></p><p><span>GCash •••• 4567 gets</span><span>₱985</span></p></div></div><div class="dock"><span class="btn pri">Cash out 1,000 pts · ₱1,000</span></div></div></div><div class="cap"><span class="who ben">Ben</span><b>9 · Cash out</b>Then the status timeline</div><div class="bal">Ben 265 · 1,000 cashing out</div></li>
+</ol>
+</section>
+
+<!-- ========== PART 1 ========== -->
+<div class="part"><h2>Part 1 · The prototype</h2><p>Decisions 1–6</p></div>
+
+<section class="dec" id="d1" aria-labelledby="d1-h">
+<div class="dh"><span class="dn">1</span><div><h2 id="d1-h">One file or several</h2><p class="q">How the prototype is packaged, and whether Lavish can open it.</p></div></div>
+<p class="ctx">The nine mockups are galleries of frames (role="img" pictures, no real buttons), between 185 KB and 520 KB each. They can’t be clicked through as they are, so the prototype is a new file that redraws the core-loop screens from the approved designs. Lavish opens one HTML file per review.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>One file: <code>design/u9-prototype.html</code></h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: one file containing all nine steps and the detours"><div class="file on">design/u9-prototype.html</div><div class="chips"><span>Sign in</span><span>Post</span><span>Apply</span><span>Pick</span><span>Start</span><span>Proof</span><span>Confirm</span><span>Rate</span><span>Cash out</span></div><div class="chips"><span class="det">+ 6 detours</span></div><p class="note">≈ 30 screens, inline CSS/JS, one Lavish review</p></div>
+<ul class="pc"><li class="pro">One link for the owner; one Lavish thread holds every comment</li><li class="pro">Money and status carry across the whole loop, the point of the exercise</li><li class="con">Bigger file to edit (kept under ~250 KB by sharing one CSS block)</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>One file per flow</h4></div>
+<div class="wf" role="img" aria-label="Sketch: four separate prototype files"><div class="file">u9-proto-signin.html</div><div class="file">u9-proto-post-apply-pick.html</div><div class="file">u9-proto-work-rate.html</div><div class="file">u9-proto-cashout.html</div><p class="note">four reviews; balances restart in each file</p></div>
+<ul class="pc"><li class="pro">Smaller files, easier to review one at a time</li><li class="con">The handover between files loses state: Ben’s 380 pts don’t follow him to Cash out</li><li class="con">CSS copied four times; drift between files</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>An index linking into the mockups</h4></div>
+<div class="wf" role="img" aria-label="Sketch: an index page with links to mockup anchors"><div class="file on">u9-index.html</div><p class="note">1 Sign in → u1-signin.html#code<br>2 Post → u3-post.html#review<br>3 Apply → u4-apply.html#apply …</p></div>
+<ul class="pc"><li class="pro">Almost no new drawing</li><li class="con">Not clickable: each link lands on a gallery of frames, not a phone</li><li class="con">Can’t test keyboard or screen-reader order (decision 8)</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> the core loop is about what carries over (points held, status, who sees the pin). Only one file can keep that, and one file is one Lavish review.</p>
+</section>
+
+<section class="dec" id="d2" aria-labelledby="d2-h">
+<div class="dh"><span class="dn">2</span><div><h2 id="d2-h">Ana’s phone and Ben’s phone</h2><p class="q">The loop crosses between two people seven times. How the owner sees both sides.</p></div></div>
+<p class="ctx">The poster and the worker see different screens for the same task (U5 decision 1: one page, two views; the exact pin only for the two of them). The prototype needs to make the hand-over between phones obvious.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>Side by side from 768 px, a switch below</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: two phones side by side, Ana and Ben, with a hand-over card between"><div class="row" style="justify-content:center;margin-top:8px"><div class="mph"><span class="lab ana">Ana</span><i class="s"></i><i></i><i></i><span class="grow"></span><i class="p"></i></div><div class="col" style="flex:0 1 90px;justify-content:center"><div class="toastw">Ben’s phone: “You were picked”</div></div><div class="mph"><span class="lab ben">Ben</span><i class="s"></i><i></i><span class="grow"></span><i class="p"></i></div></div><p class="note">At 360: one phone, an Ana | Ben switch, and the same hand-over card with “See Ben’s phone”.</p></div>
+<ul class="pc"><li class="pro">The owner sees cause and effect: Ana taps Pick, Ben’s phone changes</li><li class="pro">The phone that must act next is outlined; the other dims</li><li class="con">Two live phones need the shared state of decision 5</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>One phone, Ana | Ben switch always</h4></div>
+<div class="wf" role="img" aria-label="Sketch: one phone with an Ana or Ben switch above it"><div class="seg"><span class="on">Ana</span><span>Ben</span></div><div class="row" style="justify-content:center"><div class="mph"><i class="s"></i><i></i><i></i><span class="grow"></span><i class="p"></i></div></div></div>
+<ul class="pc"><li class="pro">Simplest; same at every width</li><li class="con">The other side’s change happens off screen; easy to miss what Ben sees after a pick</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Follows the story automatically</h4></div>
+<div class="wf" role="img" aria-label="Sketch: one phone that switches to whoever acts next, with a caption"><div class="row" style="justify-content:center"><div class="mph"><span class="lab ben">Ben</span><i class="s"></i><i></i><span class="grow"></span><i class="p"></i></div></div><p class="note">“Now Ben’s turn” caption; no manual switch</p></div>
+<ul class="pc"><li class="pro">Plays like a guided tour</li><li class="con">Can’t look at Ana’s view while it’s Ben’s turn (e.g. what Ana sees during proof)</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> Lavish is reviewed on a laptop, where two phones fit and show the hand-over best; on a phone it falls back to B with a hand-over card, so nothing is lost at 360.</p>
+</section>
+
+<section class="dec" id="d3" aria-labelledby="d3-h">
+<div class="dh"><span class="dn">3</span><div><h2 id="d3-h">How much is tappable</h2><p class="q">Happy path only, a few key detours, or every state.</p></div></div>
+<p class="ctx">Every state is already drawn in the mockups. The prototype’s job is to show the loop feels right when things go well and when the most likely things go wrong. Everything not tappable is visibly inert and says “Not in the prototype · see u5-work.html”.</p>
+<div class="opts">
+<div class="opt"><div class="oh"><span class="ol">A</span><h4>Happy path only</h4></div>
+<div class="wf" role="img" aria-label="Sketch: nine steps in a line, no branches"><div class="chips"><span class="on">1</span><span class="on">2</span><span class="on">3</span><span class="on">4</span><span class="on">5</span><span class="on">6</span><span class="on">7</span><span class="on">8</span><span class="on">9</span></div><p class="note">≈ 20 screens</p></div>
+<ul class="pc"><li class="pro">Fastest to build and review</li><li class="con">Hides the moments that decide trust: a wrong code, a dropped signal while money moves, a dispute</li></ul></div>
+<div class="opt rec"><div class="oh"><span class="ol">B</span><h4>Happy path plus six detours</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: nine steps with six dashed detour branches"><div class="chips"><span class="on">1</span><span class="det">wrong code</span><span class="on">2</span><span class="det">no signal</span><span class="on">3</span><span class="det">profile first</span><span class="on">4</span><span class="on">5</span><span class="on">6</span><span class="on">7</span><span class="det">not quite done</span><span class="on">8</span><span class="on">9</span><span class="det">not live</span></div><div class="chips"><span class="det">offline (any step)</span></div><p class="note">≈ 30 screens</p></div>
+<ul class="pc"><li class="pro">One detour per risky moment, each from an approved decision (list below)</li><li class="pro">Each detour returns to the loop, so the owner never gets stuck</li><li class="con">About 10 more screens than A</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Every state from the mockups</h4></div>
+<div class="wf" role="img" aria-label="Sketch: a dense tree of all states"><div class="chips"><span>1</span><span class="det">7 states</span><span>2</span><span class="det">23 states</span><span>3</span><span class="det">14</span><span>…</span></div><p class="note">≈ 150 screens</p></div>
+<ul class="pc"><li class="pro">Complete</li><li class="con">Duplicates the mockups; weeks of work; the mockups are already the reference</li></ul></div>
+</div>
+<div class="tablewrap" tabindex="0" role="region" aria-label="The six detours in option B" style="margin-top:16px"><table><thead><tr><th>Detour</th><th>Where</th><th>What the owner sees</th><th>From</th></tr></thead><tbody>
+<tr><td>Wrong code</td><td>1 · Sign in</td><td>422 <code>OTP_INVALID</code> with attempts left, then the right code</td><td>U1 #2</td></tr>
+<tr><td>No signal while posting</td><td>2 · Post</td><td>“Didn’t go through” with Try again, which reuses the same Idempotency-Key; posted once</td><td>U3 #11</td></tr>
+<tr><td>Profile first</td><td>3 · Apply</td><td>A tier-0 Ben sees “Finish your profile to apply”, finishes, returns to the task</td><td>U2 #9, U1 #1</td></tr>
+<tr><td>Not quite done</td><td>7 · Confirm</td><td>“Not quite done?” → chat, or Report a problem → “Report and hold 400 pts” → dispute page (read-only end)</td><td>U5 #7, U6 #5–8</td></tr>
+<tr><td>Payments not live</td><td>9 · Cash out</td><td>The not-live notice in place of the actions (what the pilot shows until a provider is chosen)</td><td>U7 #2</td></tr>
+<tr><td>Offline</td><td>any step</td><td>A rail switch shows the offline banner; money actions disable and say they need a connection</td><td>U0 shell</td></tr>
+</tbody></table></div>
+<p class="recline"><b>Why B:</b> it covers the four risks the decisions spent most time on (sign-in, money never moving twice, the dispute backstop, payments not live) at a third of C’s cost.</p>
+</section>
+
+<section class="dec" id="d4" aria-labelledby="d4-h">
+<div class="dh"><span class="dn">4</span><div><h2 id="d4-h">Jumping to a step</h2><p class="q">How the owner gets back to step 7 without replaying 1–6.</p></div></div>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>A step rail above the phones, plus a link per step</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: a row of numbered step chips with Reset and Offline controls"><div class="chips"><span class="on">1 Sign in</span><span class="on">2 Post</span><span class="on">3 Apply</span><span style="border:2px solid var(--pacc)">4 Pick</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div><div class="chips"><span>Reset</span><span>Offline</span><span>360 | 768</span></div><p class="note">Link: u9-prototype.html#step-7 opens step 7 with steps 1–6 already done</p></div>
+<ul class="pc"><li class="pro">Jumping sets the state as if the earlier steps happened (Ana 800 · 400 held at step 4)</li><li class="pro">Lavish comments can say “#step-7” and mean one screen</li><li class="con">The rail takes ~48 px above the phones</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>A hidden menu (press ?)</h4></div>
+<div class="wf" role="img" aria-label="Sketch: a phone with a small overlay menu"><div class="row" style="justify-content:center"><div class="mph wide"><i class="s"></i><div class="file" style="font-size:10px">Go to: 1 · 2 · 3 · 4 …</div><span class="grow"></span></div></div></div>
+<ul class="pc"><li class="pro">Keeps the screen clean, like a real app</li><li class="con">Undiscoverable; doesn’t work on a phone without a keyboard</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Play from the start only</h4></div>
+<div class="wf" role="img" aria-label="Sketch: a start button and a progress bar"><div class="toastw" style="align-self:flex-start">Start the story ▸</div><div class="bar"><b style="width:40%"></b></div></div>
+<ul class="pc"><li class="pro">Nothing extra to build</li><li class="con">Every comment on step 8 costs seven steps of tapping</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> the owner reviews by step number, and links make Lavish comments precise.</p>
+</section>
+
+<section class="dec" id="d5" aria-labelledby="d5-h">
+<div class="dh"><span class="dn">5</span><div><h2 id="d5-h">How state is faked</h2><p class="q">Balances, task status and who can see the pin, without a server.</p></div></div>
+<p class="ctx">Whatever we pick: no network calls, no packages, no CDN, nothing saved to the browser (a reload starts over), fake data only. The prototype never computes a rule the API owns as if it were the client’s; fee and statuses are written in as the API would return them.</p>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>One small state object; screens drawn from it</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: a state object feeding both phones"><div class="file">state = { step: 4, task: "assigned", ana: {available: 800, held: 400}, ben: {available: 885}, offline: false }</div><div class="row" style="justify-content:center"><span class="arrow">↙</span><span class="arrow">↘</span></div><div class="row" style="justify-content:center;gap:24px"><div class="mph"><span class="lab ana">Ana</span><i></i><span class="grow"></span></div><div class="mph"><span class="lab ben">Ben</span><i></i><span class="grow"></span></div></div></div>
+<ul class="pc"><li class="pro">Both phones always agree; jumping to a step just sets the object</li><li class="pro">Real <code>&lt;button&gt;</code>s and links, so decision 8 can test keyboard and screen readers on it</li><li class="con">About 300 lines of plain JavaScript in the file</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>Static screens linked by anchors, no JS</h4></div>
+<div class="wf" role="img" aria-label="Sketch: screens connected by anchor links"><div class="row"><div class="file">#s4-ana</div><span class="arrow">→</span><div class="file">#s4-ben</div><span class="arrow">→</span><div class="file">#s5-ben</div></div><p class="note">CSS :target shows one screen at a time</p></div>
+<ul class="pc"><li class="pro">Works with scripts off</li><li class="con">Every combination (offline × step × phone) is a separate copy of the screen</li><li class="con">Two phones can’t change together</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Screenshots with hotspots</h4></div>
+<div class="wf" role="img" aria-label="Sketch: a flat image with a tappable rectangle"><div class="row" style="justify-content:center"><div class="mph"><i></i><span class="grow"></span><i class="p" style="outline:2px dashed var(--pcon);outline-offset:2px"></i></div></div></div>
+<ul class="pc"><li class="pro">Quick, like a Figma prototype</li><li class="con">Images break the no-external-assets rule unless inlined, and are useless for the accessibility pass</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> it is the only option where two phones stay in step and the prototype doubles as the accessibility test bed.</p>
+</section>
+
+<section class="dec" id="d6" aria-labelledby="d6-h">
+<div class="dh"><span class="dn">6</span><div><h2 id="d6-h">Widths in the prototype</h2><p class="q">Phone only, or the 768 layout too.</p></div></div>
+<p class="ctx">Every mockup already draws 360, 430, 768 and desktop as stills. Two screens change shape at 768: Browse (list and map side by side, U2 #4) and the task page’s docked action. The core loop barely touches Browse.</p>
+<div class="opts">
+<div class="opt"><div class="oh"><span class="ol">A</span><h4>360 phones only</h4></div>
+<div class="wf" role="img" aria-label="Sketch: two phone outlines"><div class="row" style="justify-content:center"><div class="mph"><i></i><span class="grow"></span></div><div class="mph"><i></i><span class="grow"></span></div></div></div>
+<ul class="pc"><li class="pro">Least work; where most users are</li><li class="con">The 768 layout is never clicked</li></ul></div>
+<div class="opt rec"><div class="oh"><span class="ol">B</span><h4>360 phones, plus a 768 switch for one phone</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: a 360 or 768 switch, the 768 frame wider"><div class="seg"><span>360</span><span class="on">768</span></div><div class="row" style="justify-content:center"><div class="mph wide"><i class="s"></i><div class="row" style="gap:4px;flex:1"><div class="col"><i></i><i></i><i></i></div><div class="col" style="background:var(--pline);border-radius:4px"></div></div></div></div></div>
+<ul class="pc"><li class="pro">Clicks through the tablet layout once, in the same state</li><li class="pro">430 and desktop stay as the approved stills</li><li class="con">At 768 only one phone fits beside the rail; the Ana | Ben switch takes over</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>360, 430, 768 and desktop</h4></div>
+<div class="wf" role="img" aria-label="Sketch: four frame sizes"><div class="seg"><span>360</span><span>430</span><span>768</span><span>Desktop</span></div><p class="note">desktop = side rail, three columns</p></div>
+<ul class="pc"><li class="pro">Every width clickable</li><li class="con">Desktop wasn’t designed beyond stills; this would invent it</li></ul></div>
+</div>
+<p class="recline"><b>Why B:</b> 768 is the only other layout the approved designs actually define; desktop would be new design work, out of scope for U9.</p>
+</section>
+
+<!-- ========== PART 2 ========== -->
+<div class="part"><h2>Part 2 · Accessibility pass</h2><p>Decisions 7–9, then a sample of real findings</p></div>
+
+<section class="dec" id="d7" aria-labelledby="d7-h">
+<div class="dh"><span class="dn">7</span><div><h2 id="d7-h">The standard</h2><p class="q">What “accessible” means for the pass.</p></div></div>
+<div class="opts">
+<div class="opt"><div class="oh"><span class="ol">A</span><h4>WCAG 2.2 AA only</h4></div>
+<div class="wf" role="img" aria-label="Sketch: one tier, WCAG 2.2 AA"><div class="tier t4">WCAG 2.2 AA · 55 criteria</div><p class="note">targets ≥ 24 px (2.5.8), text 4.5:1, UI 3:1, 200% resize, reflow at 320 px</p></div>
+<ul class="pc"><li class="pro">A known yardstick, matches what a legal review would ask</li><li class="con">Allows 24 px targets and doesn’t mention Filipino length, both below what our users need outdoors one-handed</li></ul></div>
+<div class="opt rec"><div class="oh"><span class="ol">B</span><h4>WCAG 2.2 AA plus our house rules</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: WCAG AA plus a house-rules layer"><div class="tier t4">WCAG 2.2 AA</div><div class="tier t3">+ House: targets ≥ 44 px (48 for the main action) · body 16 px · Filipino strings +40% · reduced motion · meaning never by color · points read as “400 points, 400 pesos”</div></div>
+<ul class="pc"><li class="pro">The house rules are already in CLAUDE.md and the uix skill; this just checks them</li><li class="pro">Each finding says which rule it breaks, so a WCAG pass and a house miss aren’t confused</li><li class="con">More to check than A</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Aim for AAA where cheap</h4></div>
+<div class="wf" role="img" aria-label="Sketch: AAA text contrast 7 to 1"><div class="tier t2">AAA text 7:1 · targets 44 px (2.5.5)</div><p class="note">teal #0F766E on white is 5.47:1 → fails 7:1</p></div>
+<ul class="pc"><li class="pro">Most readable in sunlight</li><li class="con">The approved teal fails 7:1 on every surface; meeting it reopens decision 0002 #2</li></ul></div>
+</div>
+<p class="recline"><b>Why B:</b> AA is the floor, and our rules (44 px, Filipino length, points read aloud) are where real users in Dumaguete would trip; AAA would undo the approved brand color.</p>
+</section>
+
+<section class="dec" id="d8" aria-labelledby="d8-h">
+<div class="dh"><span class="dn">8</span><div><h2 id="d8-h">How it’s checked</h2><p class="q">The mockups are pictures; the build will be real elements.</p></div></div>
+<p class="ctx">Every phone frame in u0–u8 is <code>role="img"</code> with spans inside: 0 <code>&lt;button&gt;</code> elements across all nine files. A screen reader reads each frame as one picture, and keyboard focus can’t enter it. So the mockups can be audited for what they <em>look</em> like (contrast, size, order, copy length), and the prototype for how they <em>behave</em>.</p>
+<div class="opts">
+<div class="opt"><div class="oh"><span class="ol">A</span><h4>Static audit of the mockups only</h4></div>
+<div class="wf" role="img" aria-label="Sketch: token contrast math and a size check"><div class="gridt"><span class="h">Pair</span><span class="h">Ratio</span><span class="h">Need</span><span>teal / white</span><span>5.47</span><span>4.5</span><span>count / dark red</span><span>2.77</span><span>4.5</span></div></div>
+<ul class="pc"><li class="pro">Covers all nine files and both themes from the CSS tokens</li><li class="con">Says nothing about focus order, names or what a screen reader announces</li></ul></div>
+<div class="opt rec"><div class="oh"><span class="ol">B</span><h4>Static audit of u0–u8, hands-on test of the prototype</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: two lanes, static audit and hands-on test"><div class="tier t3">Static, u0–u8: every token pair in light and dark · target sizes from CSS · fixed heights at 200% text · Filipino copy length · motion</div><div class="tier t4">Hands-on, prototype: keyboard only · VoiceOver on iPhone Safari · TalkBack on Android Chrome · 200% zoom · reduced motion on</div></div>
+<ul class="pc"><li class="pro">Each lane checks what it can actually prove</li><li class="pro">The prototype’s focus order and names become the build’s reference</li><li class="con">Needs a real Android and iPhone for an hour (no package, no install)</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>An automated scanner</h4></div>
+<div class="wf" role="img" aria-label="Sketch: an automated scan report"><div class="file">axe-core … 0 violations</div><p class="note">the frames are images, so “0” means nothing</p></div>
+<ul class="pc"><li class="pro">Repeatable</li><li class="con">Needs a package (not allowed in the design phase), and passes picture frames it can’t see into</li></ul></div>
+</div>
+<p class="recline"><b>Why B:</b> it is honest about what each source can prove, and needs nothing installed.</p>
+</section>
+
+<section class="dec" id="d9" aria-labelledby="d9-h">
+<div class="dh"><span class="dn">9</span><div><h2 id="d9-h">Reporting, and which fixes land in U9</h2><p class="q">A findings table, fixes applied to the mockups, or both.</p></div></div>
+<p class="ctx">Most findings live in shared tokens or components (one fix in u0 repairs every screen); a few are per-screen markup notes that only matter in the build.</p>
+<div class="opts">
+<div class="opt"><div class="oh"><span class="ol">A</span><h4>Findings table only; fix in the build</h4></div>
+<div class="wf" role="img" aria-label="Sketch: a findings table, nothing changed"><div class="gridt"><span class="h">Finding</span><span class="h">Sev</span><span class="h">Fix in</span><span>count badge dark</span><span>HIGH</span><span>U10</span></div></div>
+<ul class="pc"><li class="pro">No approved file changes</li><li class="con">The approved mockups keep showing failing colors, and the build copies them</li></ul></div>
+<div class="opt rec"><div class="oh"><span class="ol">B</span><h4>Table + token and component fixes in U9; markup notes for the build</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: findings split into U9 token fixes and build notes"><div class="gridt"><span class="h">Finding</span><span class="h">Sev</span><span class="h">Fix in</span><span>count badge dark</span><span>HIGH</span><span>U9 token</span><span>input border</span><span>MED</span><span>U9 token</span><span>points read aloud</span><span>MED</span><span>build note</span></div><p class="note">Token fixes: in u0 and the prototype, then copied to u1–u8’s shared CSS in one reviewed pass</p></div>
+<ul class="pc"><li class="pro">One change per token fixes every screen; the owner re-approves u0 once</li><li class="pro">Build notes travel in the handoff table next to the screen</li><li class="con">u1–u8 get a CSS-only change; a quick before/after check for each</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>Fix every mockup now, markup included</h4></div>
+<div class="wf" role="img" aria-label="Sketch: all nine mockups marked changed"><div class="chips"><span class="det">u0</span><span class="det">u1</span><span class="det">u2</span><span class="det">u3</span><span class="det">u4</span><span class="det">u5</span><span class="det">u6</span><span class="det">u7</span><span class="det">u8</span></div><p class="note">rewrite frames with real buttons</p></div>
+<ul class="pc"><li class="pro">The mockups become perfect references</li><li class="con">2.6 MB of approved HTML to rework and re-approve, for pictures nobody taps</li></ul></div>
+</div>
+<p class="recline"><b>Why B:</b> the HIGH findings are token colors, fixable in a few lines; markup belongs to the build, where it is cheap.</p>
+</section>
+
+<section class="dec" id="a11y" aria-labelledby="a11y-h">
+<div class="dh"><span class="dn ghost">✓</span><div><h2 id="a11y-h">Sample findings (real, from the approved mockups)</h2><p class="q">Measured from the CSS tokens in u0–u8. HIGH = fails WCAG AA where meaning depends on it; MED = fails a house rule or passes with no margin; LOW = polish. Full table in step 2.</p></div></div>
+<div class="tablewrap" tabindex="0" role="region" aria-label="Accessibility findings sample"><table class="wide">
+<thead><tr><th>#</th><th>Finding</th><th>Where</th><th>Measured</th><th>Rule</th><th>Sev</th><th>Proposed fix · lands in</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td>Unread count on the bell and tabs is unreadable in dark mode</td><td><code>.tab .cnt</code>, all 9 mockups</td><td class="ms"><span class="sw" style="background:#F87171"></span>#FFF on #F87171 = 2.77:1, 11 px</td><td>1.4.3 (4.5:1)</td><td><span class="sev h">HIGH</span></td><td>Dark: #0C0A09 on #F87171 = 7.14:1; size 12 px (scale minimum) · U9 token</td></tr>
+<tr><td class="num">2</td><td>“ID verified” check on the avatar disappears in dark mode</td><td><code>.avb</code>, U4, U5, U6, U8</td><td class="ms"><span class="sw" style="background:#4ADE80"></span>#FFF on #4ADE80 = 1.74:1</td><td>1.4.11 (3:1)</td><td><span class="sev h">HIGH</span></td><td>Dark: #052E16 on #4ADE80 = 8.55:1 · U9 token</td></tr>
+<tr><td class="num">3</td><td>Input and chip outlines are too faint to find the field</td><td><code>.inp</code> in every form; <code>.chipb</code> filter chips (U0, U2–U4)</td><td class="ms">#E7E5E4 on #FFF = 1.26:1; dark #292524 on #1C1917 = 1.15:1</td><td>1.4.11 (3:1)</td><td><span class="sev h">HIGH</span></td><td>New <code>--line-strong</code> for inputs: #8A847F (3.69:1) light, #78716C (3.65:1) dark; cards keep <code>--line</code> · U9 token</td></tr>
+<tr><td class="num">4</td><td>Warning text on its soft background passes by 0.01</td><td><code>--warn</code> on <code>--warn-soft</code>, U0, U1, U3–U8 (e.g. U5 last-2-hours countdown)</td><td class="ms">#B45309 on #FEF3C7 = 4.51:1</td><td>1.4.3, no margin</td><td><span class="sev m">MED</span></td><td>Text on warn-soft uses <code>--warn-ink</code> #92400E = 6.37:1 · U9 token</td></tr>
+<tr><td class="num">5</td><td>Small buttons and links under 44 px</td><td><code>.btn.sm</code> 36, <code>.ib.s</code> 36, <code>.lnk</code> 36 (e.g. “Mark all read”), <code>.chipb</code> 40</td><td class="ms">36–40 px</td><td>House 44 px (passes 2.5.8’s 24 px)</td><td><span class="sev m">MED</span></td><td>Keep the look, pad the hit area to 44 px · U9 component</td></tr>
+<tr><td class="num">6</td><td>Fixed heights clip text at 200%</td><td><code>.btn{height:44px}</code>, <code>.badge{height:24px;white-space:nowrap}</code>, <code>.bnav{height:72px}</code></td><td class="ms">height, not min-height</td><td>1.4.4, 1.4.10</td><td><span class="sev m">MED</span></td><td><code>min-height</code> and wrapping (U8 already does this for badges) · U9 component</td></tr>
+<tr><td class="num">7</td><td>Points are read as “250 pts dot peso 250”</td><td><code>.money</code>, every card and fee box</td><td>no spoken form</td><td>1.3.1, house “N pts · ₱N”</td><td><span class="sev m">MED</span></td><td>Visible text unchanged; spoken “250 points, 250 pesos” · build note + prototype</td></tr>
+<tr><td class="num">8</td><td>Icon-only controls are named with <code>aria-label</code> on a plain span</td><td>“+” Post tab (U0, U2–U4, U7, U8), Back, ⋯; U5 uses a hidden text span instead</td><td>span has no role</td><td>4.1.2</td><td><span class="sev m">MED</span></td><td>Build as <code>&lt;a&gt;</code>/<code>&lt;button&gt;</code> with the name “Post a task”; one pattern everywhere · build note + prototype</td></tr>
+<tr><td class="num">9</td><td>No focus state drawn for anything inside the phone</td><td>all 9 (only page links have <code>:focus-visible</code>)</td><td>not drawn</td><td>2.4.7, 2.4.13</td><td><span class="sev m">MED</span></td><td>Focus ring token: 3 px <code>--pri</code> + 2 px offset (5.24:1 on bg) · U9 component in u0</td></tr>
+<tr><td class="num">10</td><td>Active tab shown by color and weight only</td><td><code>.tab.on</code> pill #CCFBF1 on #FFF = 1.13:1</td><td class="ms">1.13:1</td><td>1.4.1</td><td><span class="sev l">LOW</span></td><td><code>aria-current="page"</code>; the bold label is the non-color cue · build note</td></tr>
+<tr><td class="num">11</td><td>Teal on every surface</td><td><code>#0F766E</code> on #FFF / #FAFAF9 / #F5F5F4 / #CCFBF1; dark #2DD4BF on #1C1917</td><td class="ms">5.47 / 5.24 / 5.02 / 4.86 / 9.39</td><td>1.4.3</td><td><span class="sev p">PASS</span></td><td>None; 0002 #2 stands</td></tr>
+<tr><td class="num">12</td><td>Skeletons and spinners respect reduced motion</td><td><code>prefers-reduced-motion</code> in all 9</td><td>animation: none</td><td>2.3.3</td><td><span class="sev p">PASS</span></td><td>None</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ========== PART 3 ========== -->
+<div class="part"><h2>Part 3 · Handoff</h2><p>Decisions 10–12, then a sample of the table and the gap list</p></div>
+
+<section class="dec" id="d10" aria-labelledby="d10-h">
+<div class="dh"><span class="dn">10</span><div><h2 id="d10-h">Format</h2><p class="q">Who reads the handoff: the owner in Lavish, the U10 builders, and the backend.</p></div></div>
+<p class="ctx">Sources: the per-screen endpoint tables inside u1–u8 (92 rows) and the API-gaps sections of u0–u8 and decisions 0001–0010 (about 70 mentions, roughly 50 after merging repeats; the exact count comes in step 2).</p>
+<div class="opts">
+<div class="opt"><div class="oh"><span class="ol">A</span><h4>Markdown only, in <code>docs/</code></h4></div>
+<div class="wf" role="img" aria-label="Sketch: one Markdown file"><div class="file on">docs/handoff.md</div><p class="note">screens table + gaps, plain text</p></div>
+<ul class="pc"><li class="pro">Diffable; builders grep it; lives with the decisions</li><li class="con">Lavish reviews HTML; a 92-row Markdown table is hard to read and can’t link into the mockups’ frames</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>HTML only, in <code>design/</code></h4></div>
+<div class="wf" role="img" aria-label="Sketch: one HTML file"><div class="file on">design/u9-handoff.html</div><p class="note">table, filters, links to mockup frames</p></div>
+<ul class="pc"><li class="pro">Reviewable in Lavish; each row links to its frame</li><li class="con">The backend’s to-do list ends up inside a design file they won’t open</li></ul></div>
+<div class="opt rec"><div class="oh"><span class="ol">C</span><h4>Screens table in HTML; gap list in Markdown</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: an HTML file for screens and a Markdown file for gaps, each fact in one place"><div class="file on">design/u9-handoff.html</div><p class="note">screens × states × endpoints × codes, a11y build notes, links to frames</p><div class="file on">docs/api-gaps.md</div><p class="note">one consolidated gap list; the HTML links to it, doesn’t copy it</p></div>
+<ul class="pc"><li class="pro">Each audience gets its format, and each fact lives in one place</li><li class="pro"><code>docs/api-gaps.md</code> is the U10 input decision 0001 asks for</li><li class="con">Two files to review</li></ul></div>
+</div>
+<p class="recline"><b>Why C:</b> the screens table is for looking at (Lavish, links to frames); the gap list is a backend to-do that should be diffable and live with the decisions. Nothing is written twice.</p>
+</section>
+
+<section class="dec" id="d11" aria-labelledby="d11-h">
+<div class="dh"><span class="dn">11</span><div><h2 id="d11-h">How the screens table is grouped</h2><p class="q">One row per screen with its states, endpoints and error codes.</p></div></div>
+<div class="opts">
+<div class="opt rec"><div class="oh"><span class="ol">A</span><h4>By phase (U1–U8), plus an endpoint index</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: table grouped by phase and an endpoint index"><div class="gridt"><span class="h">U5 · Work</span><span class="h">Endpoint</span><span class="h">Codes</span><span>Start sheet</span><span>POST …/start</span><span>409, 422</span><span>Proof</span><span>POST …/proof</span><span>409, 422</span></div><div class="gridt"><span class="h">Endpoint</span><span class="h">Screens</span><span class="h">Used?</span><span>GET /health</span><span>—</span><span>not in UI</span></div></div>
+<ul class="pc"><li class="pro">Matches the mockups and decisions one to one; each row links to its frame</li><li class="pro">The index flags endpoints no screen uses (a coverage check)</li><li class="con">The core loop is spread over five groups (the prototype covers that view)</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">B</span><h4>By core-loop step and role</h4></div>
+<div class="wf" role="img" aria-label="Sketch: table grouped by loop step with Ana and Ben columns"><div class="gridt"><span class="h">Step</span><span class="h">Ana</span><span class="h">Ben</span><span>4 Pick</span><span>accept</span><span>GET task</span><span>5 Start</span><span>GET task</span><span>start</span></div></div>
+<ul class="pc"><li class="pro">Reads like the story</li><li class="con">Wallet, profile, settings and reports don’t fit a step; they’d need an “other” bucket of 40 rows</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>By endpoint only</h4></div>
+<div class="wf" role="img" aria-label="Sketch: table keyed by endpoint"><div class="gridt"><span class="h">Endpoint</span><span class="h">Codes</span><span class="h">Screens</span><span>GET /tasks/{ulid}</span><span>403 404 429</span><span>11 screens</span></div></div>
+<ul class="pc"><li class="pro">What the API client is built from</li><li class="con">Loses the states; a builder of one screen has to search the whole table</li></ul></div>
+</div>
+<p class="recline"><b>Why A:</b> U10 will build feature by feature, which is how the phases are cut; the endpoint index gives the API-client view for free.</p>
+</section>
+
+<section class="dec" id="d12" aria-labelledby="d12-h">
+<div class="dh"><span class="dn">12</span><div><h2 id="d12-h">How the gaps are prioritised</h2><p class="q">One consolidated list, deduped, grouped so the backend knows what to do first.</p></div></div>
+<div class="opts">
+<div class="opt"><div class="oh"><span class="ol">A</span><h4>By area only</h4></div>
+<div class="wf" role="img" aria-label="Sketch: gaps listed under area headings"><div class="tier t3">Platform · Sign-in · Tasks · Chat · Wallet · Notifications · Docs</div></div>
+<ul class="pc"><li class="pro">Easy to find a gap</li><li class="con">No order: CORS (nothing works without it) sits beside a docs example</li></ul></div>
+<div class="opt rec"><div class="oh"><span class="ol">B</span><h4>Three priority tiers, each tagged with area and status</h4><span class="recb">Recommended</span></div>
+<div class="wf" role="img" aria-label="Sketch: three priority tiers with status tags"><div class="tier t1">Blocks the pilot</div><div class="tier t2">Before public launch</div><div class="tier t3">Later · decided around</div><div class="tier t4">Owner calls · Docs only (separate lists)</div><p class="note">each: area · status (Open / Decided around / Owner call) · source decisions</p></div>
+<ul class="pc"><li class="pro">The backend gets an order of work; the owner sees only the calls that are theirs</li><li class="pro">“Decided around” records gaps the designs already work without (e.g. no search)</li><li class="con">The tier is a judgment; the owner confirms it per gap</li></ul></div>
+<div class="opt"><div class="oh"><span class="ol">C</span><h4>By the phase that found it</h4></div>
+<div class="wf" role="img" aria-label="Sketch: gaps listed by phase"><div class="tier t3">U0 · U1 · U2 · … · U8</div></div>
+<ul class="pc"><li class="pro">Mirrors the decisions</li><li class="con">The 429 retry time appears in every phase; dedupe is the whole point</li></ul></div>
+</div>
+<p class="recline"><b>Why B:</b> it answers “what does the backend do first” and keeps owner decisions from getting lost in a technical list.</p>
+</section>
+
+<section class="dec" id="handoff" aria-labelledby="handoff-h">
+<div class="dh"><span class="dn ghost">⇄</span><div><h2 id="handoff-h">Sample: screens table and gap list</h2><p class="q">Real rows from the mockups and decisions, in the recommended shape (D10 C, D11 A, D12 B).</p></div></div>
+<h3 class="tblh">Screens table · U5 Work, U6 Trust, U7 Wallet (excerpt)</h3>
+<div class="tablewrap" tabindex="0" role="region" aria-label="Screens table sample"><table class="wide">
+<thead><tr><th>Screen</th><th>States</th><th>Endpoint</th><th>Error codes</th><th>Build notes</th><th>Mockup</th></tr></thead>
+<tbody>
+<tr><td>Start sheet (worker)</td><td>default, before photos 0–4, photo too big / wrong type, location asked / denied / timeout, starting, started, offline</td><td><code>POST /tasks/{task_ulid}/start</code></td><td>409 <code>INVALID_TRANSITION</code> · 422 · 429</td><td>a11y #5, #9</td><td>u5 · Start task (D4)</td></tr>
+<tr><td>Send photos of the work</td><td>default, required vs optional, sending %, failed → Try again, sent, offline</td><td><code>POST /tasks/{task_ulid}/proof</code></td><td>409 <code>INVALID_TRANSITION</code> · 422 <code>CONTENT_BLOCKED</code>, size · 429</td><td>progress announced every 25%</td><td>u5 · Proof (D5)</td></tr>
+<tr><td>Confirm sheet (poster)</td><td>held, fee, Ben receives; confirming; done → rating</td><td><code>POST /tasks/{task_ulid}/confirm</code></td><td>403 <code>FORBIDDEN</code> · 404 · 409 <code>INVALID_TRANSITION</code> · 429</td><td>a11y #7</td><td>u5 · Confirm (D6)</td></tr>
+<tr><td>Rating sheet</td><td>empty, stars chosen, comment counter, sending, sent (hidden)</td><td><code>POST /tasks/{task_ulid}/rating</code></td><td>403 · 409 <code>ALREADY_RATED</code> / <code>RATING_CLOSED</code> / <code>INVALID_TRANSITION</code> · 422 <code>CONTENT_BLOCKED</code> · 429</td><td>stars as a radio group, word per star</td><td>u6 · Rating (D2)</td></tr>
+<tr><td>Cash out form + confirm</td><td>amount chips, account picker, fee ₱15, sending, gate cards</td><td><code>POST /wallet/cash-outs</code></td><td>403 <code>TIER_TOO_LOW</code> / <code>ACCOUNT_SUSPENDED</code> / <code>REVERIFY_REQUIRED</code> · 409 <code>INSUFFICIENT_POINTS</code> / <code>CASH_OUT_FROZEN</code> / <code>LIMIT_REACHED</code> / <code>PAYOUT_ACCOUNT_COOLING_DOWN</code> / <code>IDEMPOTENCY_CONFLICT</code> · 422 · 429 · <code>PAYMENTS_NOT_LIVE</code></td><td>same Idempotency-Key on retry (U7 #12)</td><td>u7 · Cash out (D9)</td></tr>
+</tbody></table></div>
+
+<h3 class="tblh">Gap list · deduped (excerpt)</h3>
+<div class="gapg"><h4><span class="sev h">Blocks the pilot</span></h4><ul class="gapl">
+<li><b>The browser can’t reach the API yet</b>CORS for the app’s origin, and how the browser holds the Sanctum token (or a move to cookie-based SPA auth).<div class="src"><span class="tag">Platform</span><span class="tag">Open</span><span class="tag">0001</span></div></li>
+<li><b>A 429 retry time the browser can read</b><code>Retry-After</code> on every 429 and exposed through CORS (or <code>errors.retry_after</code>); chat 429s should also say which limit was hit.<div class="src"><span class="tag">Platform</span><span class="tag">Open</span><span class="tag">0002–0010 (repeated in 9)</span><span class="tag">0007</span></div></li>
+<li><b>Barangay and category lists</b>No endpoint for either; the profile, filters, post form and skills all need them.<div class="src"><span class="tag">Reference data</span><span class="tag">Open</span><span class="tag">0003–0009</span></div></li>
+<li><b>Consent isn’t recorded</b>Terms/privacy acceptance isn’t stored and <code>POST /me/verification</code> has no ID/selfie consent field.<div class="src"><span class="tag">Sign-in · privacy</span><span class="tag">Open</span><span class="tag">0003</span></div></li>
+</ul></div>
+<div class="gapg"><h4><span class="sev m">Before public launch</span></h4><ul class="gapl">
+<li><b><code>tasks_done</code> on the person block</b>Trust chips need it on feed, detail and task cards; today it costs one <code>/users/{ulid}</code> call per person.<div class="src"><span class="tag">Tasks</span><span class="tag">Open</span><span class="tag">0004, 0007, 0008</span></div></li>
+<li><b>Notices link only to a task</b>Cash-in, cash-out, dispute and question notices can’t deep-link; add a <code>target</code> {type, ulid}, and a <code>cash_in_failed</code> kind.<div class="src"><span class="tag">Notifications</span><span class="tag">Open</span><span class="tag">0010</span></div></li>
+</ul></div>
+<div class="gapg"><h4><span class="sev l">Later · decided around</span></h4><ul class="gapl">
+<li><b>No text search on <code>GET /tasks</code></b>The design has no search until <code>q</code> exists.<div class="src"><span class="tag">Tasks</span><span class="tag">Decided around · 0004 #5</span></div></li>
+<li><b>No push subscription for the web</b>Push shows “Coming soon” until <code>POST /me/devices</code> takes a web subscription and a device can be removed.<div class="src"><span class="tag">Notifications</span><span class="tag">Decided around · 0010 #4</span><span class="tag">0002</span></div></li>
+</ul></div>
+<div class="gapg"><h4><span class="sev l" style="background:var(--pacc-soft);color:var(--pacc-ink)">Owner calls</span></h4><ul class="gapl">
+<li><b>Name change after ID approval</b>A tier-2 user can change their name and keep “ID verified”. Lock the name after approval, or drop the chip until re-review.<div class="src"><span class="tag">Profile · trust</span><span class="tag">Owner call</span><span class="tag">0010</span></div></li>
+<li><b>The spec still says no web app, and Flutter</b><code>spec.md</code> §1 lists “web app” under Not in V1 and §8 names a Flutter app; decision 0001 changed both. When is the spec updated?<div class="src"><span class="tag">Spec</span><span class="tag">Owner call</span><span class="tag">0001</span></div></li>
+<li><b>Request changes before confirm</b>No status for it and nothing pauses auto-release; 0007 #7 works without it, owner may revisit.<div class="src"><span class="tag">Work</span><span class="tag">Owner call</span><span class="tag">0007</span></div></li>
+</ul></div>
+<div class="gapg"><h4><span class="sev l">Docs only</span></h4><ul class="gapl">
+<li><b><code>openapi.yaml</code> examples and errors</b>Missing <code>my_application</code> (0004), apply errors (0006), the private task view and message <code>type</code>; the channel is <code>task.{ulid}.{worker_ulid}</code>, not <code>task.{ulid}</code> (0007); dispute and rating blocks, 403 <code>ACCOUNT_SUSPENDED</code> (0008).<div class="src"><span class="tag">Docs</span><span class="tag">Open</span><span class="tag">0004, 0006–0008</span></div></li>
+</ul></div>
+</section>
+
+<section class="dec" id="shell" aria-labelledby="shell-h">
+<div class="dh"><span class="dn ghost">▸</span><div><h2 id="shell-h">Sample: the prototype at step 4</h2><p class="q">The recommended shell (D2 A, D4 A, D6 B) as it would look in Lavish on a laptop. At 360 the second phone hides behind the Ana | Ben switch.</p></div></div>
+<div class="shell">
+<div class="rail" role="img" aria-label="Step rail: steps 1 to 3 done, step 4 Pick current, 5 to 9 to come">
+<span class="st done"><i>1</i>Sign in</span><span class="st done"><i>2</i>Post</span><span class="st done"><i>3</i>Apply</span><span class="st cur"><i>4</i>Pick</span><span class="st"><i>5</i>Start</span><span class="st"><i>6</i>Proof</span><span class="st"><i>7</i>Confirm</span><span class="st"><i>8</i>Rate</span><span class="st"><i>9</i>Cash out</span>
+</div>
+<div class="ctrls" role="img" aria-label="Controls: Ana or Ben switch, 360 or 768 width, Offline off, Reset"><span class="seg2"><span class="on">Ana</span><span>Ben</span></span><span class="seg2"><span class="on">360</span><span>768</span></span><span class="pill">Offline: off</span><span class="pill">Reset</span></div>
+<div class="duo">
+<figure><div class="ph md" role="img" aria-label="Ana's phone: pick Ben confirm sheet, the phone to act now"><div class="screen"><div class="sbar"><span>10:40</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><h3 style="padding-left:8px">Applicants · 3</h3></div><div class="body"><div class="card"><div class="person"><span class="av">BS</span><div><h4>Ben S.</h4><span class="badge ok">ID verified</span> <span class="badge">4.8 · 12</span></div></div></div></div><div class="scrim"></div><div class="sheet"><span class="handle"></span><h4>Pick Ben S.?</h4><p class="meta" style="margin:0">Ben sees the exact spot. The other 2 are told.</p><div class="fee"><p><span>Held</span><span>400 pts</span></p><p><span>Fee</span><span>20 pts</span></p><p><span>Ben receives</span><span>380 pts</span></p></div><span class="btn pri">Pick Ben</span></div></div></div><figcaption><span class="who ana">Ana</span> acts now</figcaption></figure>
+<div class="handoff" role="note"><b>After “Pick Ben”</b>Ben’s phone: “You were picked for Clean the roof gutter…”<br><span>See Ben’s phone</span></div>
+<figure class="alt"><div class="ph md" role="img" aria-label="Ben's phone: My tasks, application waiting, dimmed"><div class="screen" style="opacity:.55"><div class="sbar"><span>10:40</span><span class="sbi"><i></i><i></i><i class="b"></i></span></div><div class="appbar"><h3 style="padding-left:8px">My tasks</h3></div><div class="body"><div class="card"><h4>Clean the roof gutter before the rains</h4><p class="money"><b>380</b> pts <small>you’d receive</small></p><p class="meta"><span class="badge">Waiting for Ana</span></p></div></div><div class="bnav"><span>Browse</span><span>My tasks</span><span class="post"><b>+</b></span><span>Wallet</span><span>Me</span></div></div></div><figcaption><span class="who ben">Ben</span> waiting</figcaption></figure>
+</div>
+</div>
+</section>
+
+<section class="dec" id="files" aria-labelledby="files-h">
+<div class="dh"><span class="dn ghost">≡</span><div><h2 id="files-h">What U9 produces (with all recommendations)</h2><p class="q">Step 2 writes these; each goes to Lavish.</p></div></div>
+<div class="tablewrap" tabindex="0" role="region" aria-label="Files U9 produces"><table>
+<thead><tr><th>File</th><th>What</th><th>Decisions</th></tr></thead>
+<tbody>
+<tr><td><code>design/u9-prototype.html</code></td><td>Click-through core loop, two phones, six detours, step rail with links, 360/768, plain JS state, no network or storage</td><td>1–6</td></tr>
+<tr><td><code>design/u9-handoff.html</code></td><td>Screens table by phase with states, endpoints, codes and a11y build notes; endpoint index with coverage; the full a11y findings table</td><td>7–9, 11</td></tr>
+<tr><td><code>docs/api-gaps.md</code></td><td>One deduped gap list: Blocks the pilot, Before launch, Later, Owner calls, Docs only; each with area, status and source</td><td>10, 12</td></tr>
+<tr><td><code>design/u0-foundation.html</code> (+ shared CSS in u1–u8)</td><td>Token and component fixes from the findings (count badge, verified check, input border, warning text, hit areas, min-heights, focus ring)</td><td>9</td></tr>
+<tr><td><code>docs/decisions/0011-prototype-and-handoff.md</code></td><td>The owner’s decisions, as for every phase</td><td>all</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="dec" id="decisions" aria-labelledby="decisions-h">
+<div class="dh"><span class="dn ghost">?</span><div><h2 id="decisions-h">Decisions needed</h2><p class="q">Answer by number with a letter, or “all recommended”.</p></div></div>
+<ol class="reclist">
+<li><span class="dn">1</span><p><b>One file or several:</b> A · one file <code>design/u9-prototype.html</code> (recommended), B per flow, C index into the mockups</p></li>
+<li><span class="dn">2</span><p><b>Two phones:</b> A · side by side from 768 px, Ana | Ben switch below (recommended), B switch always, C follows the story</p></li>
+<li><span class="dn">3</span><p><b>Tappable depth:</b> B · happy path plus six detours (recommended), A happy path only, C every state</p></li>
+<li><span class="dn">4</span><p><b>Jumping:</b> A · step rail plus a link per step (recommended), B hidden menu, C play from the start</p></li>
+<li><span class="dn">5</span><p><b>Faked state:</b> A · one state object, real buttons (recommended), B static anchors, C screenshots</p></li>
+<li><span class="dn">6</span><p><b>Widths:</b> B · 360 plus a 768 switch (recommended), A 360 only, C all four</p></li>
+<li><span class="dn">7</span><p><b>Standard:</b> B · WCAG 2.2 AA plus house rules (recommended), A AA only, C AAA where cheap</p></li>
+<li><span class="dn">8</span><p><b>Method:</b> B · static audit of u0–u8, hands-on test of the prototype (recommended), A static only, C scanner</p></li>
+<li><span class="dn">9</span><p><b>Fixes in U9:</b> B · findings table, token and component fixes now, markup as build notes (recommended), A table only, C fix every mockup</p></li>
+<li><span class="dn">10</span><p><b>Format:</b> C · screens table in HTML, gaps in <code>docs/api-gaps.md</code> (recommended), A Markdown only, B HTML only</p></li>
+<li><span class="dn">11</span><p><b>Grouping:</b> A · by phase plus an endpoint index (recommended), B by loop step, C by endpoint</p></li>
+<li><span class="dn">12</span><p><b>Gap priority:</b> B · three tiers with area and status, owner calls and docs apart (recommended), A by area, C by phase</p></li>
+</ol>
+<p class="ctx" style="margin-top:16px">Also confirm: the HIGH colors in findings 1–3 change approved u0 tokens (dark count badge, dark verified check, input border). They don’t touch the brand teal.</p>
+</section>
+</main>
+</body>
+</html>
