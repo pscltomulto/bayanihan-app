@@ -66,6 +66,8 @@ Balance (available and locked), ledger history, cash-in (fake gateway for now: c
 
 ## U8 — Notifications, profile and settings
 
+Status: approved 2026-11-27 — `design/u8-me.html`, decisions in `docs/decisions/0010-notifications-profile-settings.md`.
+
 Notification list and push permission prompt, own profile and edit, skills, public profile of another user, standing and its meaning, signed-in devices and sign-out everywhere, language (English / Filipino).
 
 ## U9 — Clickable prototype and handoff
