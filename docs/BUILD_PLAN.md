@@ -60,6 +60,8 @@ Two-way rating after completion, opening a dispute with evidence, dispute status
 
 ## U7 — Wallet
 
+Status: approved 2026-11-26 — `design/u7-wallet.html`, decisions in `docs/decisions/0009-wallet.md`.
+
 Balance (available and locked), ledger history, cash-in (fake gateway for now: create, wait, poll, expire), cash-out request and its states (pending, held for review, paid, failed and refunded), payout accounts with masked numbers, tier-2 requirement for cash-out.
 
 ## U8 — Notifications, profile and settings
